@@ -20,6 +20,14 @@ export interface ListBookingsResponse {
   bookings: Booking[];
 }
 
+export interface CheckInRequest {
+  businessId: string;
+  token: string;
+}
+export interface CheckInResponse {
+  booking: Booking;
+}
+
 export interface TokenLookupRequest {
   businessId: string;
   token: string;

@@ -60,5 +60,28 @@ pnpm --filter @gracesoft/api typecheck
 pnpm --filter @gracesoft/api test
 ```
 
-**Next up:** `apps/admin-owner` and `apps/admin-kiosk` scaffolding, then Phase 1
-(Onboarding Wizard).
+**Next up:** `apps/admin-owner` scaffolding, then Phase 1 (Onboarding Wizard).
+
+## 2026-09-11 — `apps/admin-kiosk` (check-in queue frontend)
+
+**Implemented and verified**:
+- Added a `checkIn` capability to `BookingService`/`/bookings/check-in` (staff-authenticated,
+  scoped to today's confirmed booking for a token) — the token doubling as the arrival
+  credential the Pilot Track's check-in module calls for, without needing a name.
+- `apps/admin-kiosk`: Next.js 14 app router, deliberately minimal kiosk-mode UI
+  (large touch targets, no text selection, polls the queue every 15s). Shows only
+  time/service/token — never a booker's name, matching the Phase 0 privacy boundary in
+  the UI as well as the API.
+- Added `@fastify/cors` to `apps/api`, scoped to the two admin frontend origins via a new
+  `CORS_ORIGINS` env var.
+- Dev-only sign-in page as the stand-in for real Clerk/Auth.js (same pattern as
+  `DevSessionProvider` in apps/api).
+
+**Verified in a real browser**, not just `next build`: ran a local Postgres, seeded a
+business/staff user/three bookings, started `apps/api` and the kiosk dev server, signed
+in, confirmed the live queue loaded from the API (2 waiting, 1 arrived), tapped "Check
+in" on a waiting booking, confirmed it moved to "Arrived" in the UI, and confirmed the
+underlying `bookings.status` row actually changed in Postgres (not just local UI state).
+
+**Deliberately not done yet**: `apps/admin-owner` (blueprint editor, booking
+history/analytics, settings, audit log, billing) — next up.

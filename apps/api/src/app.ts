@@ -1,3 +1,4 @@
+import cors from "@fastify/cors";
 import sensible from "@fastify/sensible";
 import { getDb, type PrismaClient } from "@gracesoft/db";
 import Fastify, { type FastifyInstance } from "fastify";
@@ -35,6 +36,7 @@ export async function buildApp(opts: BuildAppOptions = {}): Promise<FastifyInsta
   const app = Fastify({ logger: true });
   registerErrorHandler(app);
 
+  await app.register(cors, { origin: env.CORS_ORIGINS, credentials: true });
   await app.register(sensible);
   await app.register(authPlugin, { sessionProvider });
 

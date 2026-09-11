@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "admin-kiosk",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--filter", "@gracesoft/admin-kiosk", "dev"],
+      "port": 3002
+    },
+    {
+      "name": "admin-owner",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--filter", "@gracesoft/admin-owner", "dev"],
+      "port": 3001
+    }
+  ]
+}

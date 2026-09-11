@@ -1,4 +1,8 @@
-import type { CreateBookingResponse, ListBookingsResponse } from "@gracesoft/shared-types";
+import type {
+  CheckInResponse,
+  CreateBookingResponse,
+  ListBookingsResponse,
+} from "@gracesoft/shared-types";
 import { requireStaff } from "@gracesoft/auth";
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
@@ -12,6 +16,11 @@ const createBookingSchema = z.object({
   startsAt: z.string().datetime(),
   endsAt: z.string().datetime(),
   channel: z.enum(["whatsapp", "telegram", "admin"]),
+});
+
+const checkInSchema = z.object({
+  businessId: z.string().min(1),
+  token: z.string().min(1),
 });
 
 export interface BookingRoutesOptions {
@@ -50,5 +59,17 @@ export default async function bookingRoutes(fastify: FastifyInstance, opts: Book
       request.query.date,
     );
     return { bookings };
+  });
+
+  fastify.post<{ Reply: CheckInResponse }>("/bookings/check-in", async (request, reply) => {
+    const actor = await requireAuth(request);
+    requireStaff(actor);
+    const input = checkInSchema.parse(request.body);
+    if (actor.businessId !== input.businessId) {
+      return reply.forbidden("Actor does not belong to this business");
+    }
+
+    const booking = await opts.bookingService.checkIn(input.businessId, input.token);
+    return { booking };
   });
 }

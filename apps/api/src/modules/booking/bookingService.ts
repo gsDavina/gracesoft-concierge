@@ -59,6 +59,40 @@ export class BookingService {
     }
     return toBookingDto(booking);
   }
+
+  /**
+   * Check-in for admin-kiosk (03-project-structure.md) / the pilot-track check-in module
+   * (01-milestones.md), where the booker's token doubles as their arrival credential —
+   * front desk (or, later, a self-serve kiosk) never needs a name to confirm arrival.
+   * Only ever operates on today's confirmed booking for that token; there is nothing to
+   * check in twice or check in for the wrong day.
+   */
+  async checkIn(businessId: string, token: string): Promise<Booking> {
+    const startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date();
+    endOfDay.setHours(23, 59, 59, 999);
+
+    const booking = await this.db.booking.findFirst({
+      where: {
+        businessId,
+        token,
+        status: "confirmed",
+        startsAt: { gte: startOfDay, lte: endOfDay },
+      },
+      orderBy: { startsAt: "asc" },
+    });
+
+    if (!booking) {
+      throw new Error("No confirmed booking found for this token today");
+    }
+
+    const checkedIn = await this.db.booking.update({
+      where: { id: booking.id },
+      data: { status: "checked_in" },
+    });
+    return toBookingDto(checkedIn);
+  }
 }
 
 const dbStatusToDto = {
