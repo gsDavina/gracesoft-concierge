@@ -1,0 +1,21 @@
+{
+  "name": "@gracesoft/auth",
+  "version": "0.1.0",
+  "private": true,
+  "license": "UNLICENSED",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint src --ext .ts"
+  },
+  "dependencies": {
+    "@gracesoft/shared-types": "workspace:*"
+  },
+  "devDependencies": {
+    "@gracesoft/config": "workspace:*",
+    "typescript": "^5.6.3"
+  }
+}

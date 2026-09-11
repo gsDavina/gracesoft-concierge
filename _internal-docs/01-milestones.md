@@ -5,12 +5,12 @@ Sequenced so each phase de-risks the next. Vertical assumed: healthcare (GP clin
 ## Phase 0 — Privacy Layer (2–3 weeks)
 Foundational; goes first even though it's less visible than the wizard.
 
-- [ ] Separate booker-identity store from calendar-write path (`identities` table, encrypted, vs. `bookings` table with token only)
-- [ ] Calendar events write only: token, service type, time slot — never name/phone/notes
-- [ ] Token-lookup flow: authenticated, logged (who looked up what, when)
-- [ ] Retention/deletion policy written **and implemented** as an actual scheduled job
-- [ ] Per-business encryption keys (not one global key)
-- **Deliverable:** one-page technical privacy spec, usable as sales collateral
+- [x] Separate booker-identity store from calendar-write path (`identities` table, encrypted, vs. `bookings` table with token only)
+- [x] Calendar events write only: token, service type, time slot — never name/phone/notes *(enforced at the type level via `CalendarEventInput`; real Google Calendar OAuth wiring still pending — see [06-progress-log.md](./06-progress-log.md))*
+- [x] Token-lookup flow: authenticated, logged (who looked up what, when)
+- [x] Retention/deletion policy written **and implemented** as an actual scheduled job
+- [x] Per-business encryption keys (not one global key)
+- **Deliverable:** one-page technical privacy spec, usable as sales collateral — see [05-privacy-spec.md](./05-privacy-spec.md)
 
 ## Phase 1 — Onboarding Wizard (3–5 weeks)
 Removes manual setup as the growth bottleneck.

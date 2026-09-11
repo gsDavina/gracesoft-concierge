@@ -1,0 +1,172 @@
+// Concierge — Prisma schema
+//
+// Phase 0 privacy layer (see /_internal-docs/01-milestones.md and
+// /_internal-docs/03-project-structure.md#Directory-Layout):
+//   - `Identity` (name/phone/notes, encrypted) is a separate table from `Booking`
+//     (token only). Nothing joins them except `(businessId, token)`.
+//   - `Business.encryptionKeyId` is a *reference* to a per-business key held in the
+//     platform secrets manager (Railway secrets / Infisical) — the key material itself
+//     is never stored in this database.
+//   - `TokenLookupAudit` logs every authenticated identity lookup: who, what token, why, when.
+//   - `Identity.scheduledDeletionAt` / `RetentionPolicy` back the retention job in
+//     apps/api (packages/db only owns the schema, not the job logic).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  owner
+  front_desk
+}
+
+enum BookingStatus {
+  pending
+  confirmed
+  checked_in
+  cancelled
+  completed
+}
+
+enum BookingChannel {
+  whatsapp
+  telegram
+  admin
+}
+
+model Business {
+  id              String   @id @default(cuid())
+  name            String
+  region          String // e.g. "SG" — drives holiday calendar + compliance framing
+  timezone        String   @default("Asia/Singapore")
+
+  /// Reference to the per-business encryption key in the secrets manager.
+  /// Never the key material itself.
+  encryptionKeyId String   @unique
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  staffUsers      StaffUser[]
+  identities      Identity[]
+  bookings        Booking[]
+  auditEntries    TokenLookupAudit[]
+  retentionPolicy RetentionPolicy?
+
+  @@map("businesses")
+}
+
+model StaffUser {
+  id          String   @id @default(cuid())
+  businessId  String
+  business    Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  /// Subject id from the external auth provider (Clerk/Auth.js) — see packages/auth.
+  authSubject String   @unique
+  role        Role
+
+  createdAt   DateTime @default(now())
+
+  auditEntries TokenLookupAudit[]
+
+  @@index([businessId])
+  @@map("staff_users")
+}
+
+/// Booker identity. Encrypted at rest with the business's per-business key.
+/// Deliberately has NO relation to Booking beyond the shared (businessId, token) pair —
+/// nothing here should ever be pulled in by a booking/calendar query.
+model Identity {
+  id       String @id @default(cuid())
+  businessId String
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  /// Opaque token also stored on Booking rows and in calendar event bodies.
+  token    String
+
+  /// Each field is "<iv>:<authTag>:<ciphertext>" (base64), AES-256-GCM, one key per business.
+  encryptedName  String
+  encryptedPhone String
+  encryptedNotes String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  /// Set by the retention job once past policy; the job deletes the row once this passes.
+  scheduledDeletionAt DateTime?
+
+  auditEntries TokenLookupAudit[]
+
+  @@unique([businessId, token])
+  @@index([businessId, scheduledDeletionAt])
+  @@map("identities")
+}
+
+/// Calendar-facing booking record. Only ever token + service type + time slot — see
+/// CreateBookingInput in packages/shared-types. Never name, phone, or notes.
+model Booking {
+  id         String         @id @default(cuid())
+  businessId String
+  business   Business       @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  token       String
+  serviceType String
+  startsAt    DateTime
+  endsAt      DateTime
+  status      BookingStatus @default(pending)
+  channel     BookingChannel
+
+  /// Google Calendar event id, once synced.
+  calendarEventId String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([businessId, token])
+  @@index([businessId, startsAt])
+  @@map("bookings")
+}
+
+/// Every authenticated identity lookup: who looked up what, when, and the stated reason.
+/// Append-only from the application's point of view — no update/delete path in apps/api.
+model TokenLookupAudit {
+  id         String   @id @default(cuid())
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  actorUserId String
+  actor       StaffUser @relation(fields: [actorUserId], references: [id], onDelete: Restrict)
+
+  identityId String
+  identity   Identity @relation(fields: [identityId], references: [id], onDelete: Restrict)
+
+  token      String
+  reason     String
+  lookedUpAt DateTime @default(now())
+
+  @@index([businessId, lookedUpAt])
+  @@index([identityId])
+  @@map("token_lookup_audit")
+}
+
+/// Per-business retention configuration consumed by the scheduled deletion job.
+model RetentionPolicy {
+  businessId               String   @id
+  business                 Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  /// Days after a booker's last completed/cancelled booking before their Identity
+  /// is marked for deletion.
+  identityRetentionDays    Int      @default(365)
+
+  /// Days audit log entries are kept before being purged.
+  auditLogRetentionDays    Int      @default(730)
+
+  updatedAt                DateTime @updatedAt
+
+  @@map("retention_policies")
+}
