@@ -85,3 +85,34 @@ underlying `bookings.status` row actually changed in Postgres (not just local UI
 
 **Deliberately not done yet**: `apps/admin-owner` (blueprint editor, booking
 history/analytics, settings, audit log, billing) — next up.
+
+## 2026-09-11 — `apps/admin-owner` (bookings + restricted audit log)
+
+**Implemented and verified**:
+- `IdentityService.listAuditLog` + owner-only `GET /businesses/:businessId/audit-log` —
+  a narrower privilege than the lookup itself (front-desk can look a token up; only
+  owner can review who has been doing the looking up). Returns who/what/when/why, never
+  decrypted identity data.
+- `apps/admin-owner`: Next.js 14 app router, same dev-session pattern as admin-kiosk but
+  seeded with the `owner` role. Two pages: a bookings table (all bookings, not just
+  today — "Booking history / analytics" from 03-project-structure.md) and an audit-log
+  page that also hosts the one UI-driven identity lookup (token + required reason →
+  audit row appears in the table below immediately after).
+- Verified with `next build` (typecheck + lint clean) and a real local Postgres +
+  `apps/api` instance: seeded a business/owner/booking/identity, confirmed `/health` and
+  the API came up correctly. Browser verification of the running admin-owner dev server
+  was interrupted before completion — **not yet confirmed in a live browser**, unlike
+  admin-kiosk. Re-run before trusting this page beyond "it builds and typechecks."
+
+**Still open across both frontends**: no real auth provider (both use the same
+`DevSessionProvider`-compatible localStorage session as apps/api's dev stand-in), no
+blueprint editor, no settings page, no billing page — all out of scope for what's been
+asked so far.
+
+**Push status**: local commits are ahead of `origin/main`. Pushing is blocked — the
+`gh` CLI here is authenticated as `davinaleong`, but the configured remote
+(`github.com/gsDavina/gracesoft-concierge.git`) isn't visible to that account
+(`git ls-remote` under both `davinaleong` and `gsDavina` returns "Repository not
+found"). User chose to re-auth `gh` as `gsDavina`
+(`gh auth login --hostname github.com --web`, run in an interactive terminal) — retry
+the push once that's done.

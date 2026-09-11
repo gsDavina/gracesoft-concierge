@@ -17,6 +17,14 @@ export interface LookedUpIdentity {
   notes: string | null;
 }
 
+export interface AuditLogEntry {
+  id: string;
+  token: string;
+  reason: string;
+  lookedUpAt: string;
+  actorAuthSubject: string;
+}
+
 /**
  * Owns the one boundary in the system that ever turns a token back into a name/phone/notes.
  * Every read goes through `lookup`, which requires an authenticated actor and a stated
@@ -91,5 +99,28 @@ export class IdentityService {
       phone: decryptField(identity.encryptedPhone, key),
       notes: identity.encryptedNotes ? decryptField(identity.encryptedNotes, key) : null,
     };
+  }
+
+  /**
+   * Owner-only view of "who looked up what, when" — the audit trail itself, never the
+   * decrypted identity data. Read access to this is a separate, narrower privilege from
+   * `lookup` (front-desk can look up a booker; only owner can review who has been doing
+   * the looking up).
+   */
+  async listAuditLog(businessId: string): Promise<AuditLogEntry[]> {
+    const entries = await this.db.tokenLookupAudit.findMany({
+      where: { businessId },
+      include: { actor: { select: { authSubject: true } } },
+      orderBy: { lookedUpAt: "desc" },
+      take: 200,
+    });
+
+    return entries.map((entry) => ({
+      id: entry.id,
+      token: entry.token,
+      reason: entry.reason,
+      lookedUpAt: entry.lookedUpAt.toISOString(),
+      actorAuthSubject: entry.actor.authSubject,
+    }));
   }
 }

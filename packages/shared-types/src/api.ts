@@ -38,3 +38,14 @@ export interface TokenLookupResponse {
   phone: string;
   notes: string | null;
 }
+
+export interface AuditLogEntry {
+  id: string;
+  token: string;
+  reason: string;
+  lookedUpAt: string;
+  actorAuthSubject: string;
+}
+export interface AuditLogResponse {
+  entries: AuditLogEntry[];
+}

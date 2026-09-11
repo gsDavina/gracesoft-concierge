@@ -1,5 +1,9 @@
-import type { TokenLookupRequest, TokenLookupResponse } from "@gracesoft/shared-types";
-import { requireStaff } from "@gracesoft/auth";
+import type {
+  AuditLogResponse,
+  TokenLookupRequest,
+  TokenLookupResponse,
+} from "@gracesoft/shared-types";
+import { requireOwner, requireStaff } from "@gracesoft/auth";
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { requireAuth } from "../plugins/auth.js";
@@ -32,5 +36,20 @@ export default async function identityRoutes(
     const { reason } = lookupBodySchema.parse(request.body);
     const identity = await opts.identityService.lookup(actor, request.params.token, reason);
     return identity;
+  });
+
+  fastify.get<{
+    Params: { businessId: string };
+    Reply: AuditLogResponse;
+  }>("/businesses/:businessId/audit-log", async (request, reply) => {
+    const actor = await requireAuth(request);
+    requireOwner(actor);
+
+    if (actor.businessId !== request.params.businessId) {
+      return reply.forbidden("Actor does not belong to this business");
+    }
+
+    const entries = await opts.identityService.listAuditLog(request.params.businessId);
+    return { entries };
   });
 }
