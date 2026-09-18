@@ -38,9 +38,9 @@ Removes manual setup as the growth bottleneck.
 
 ## Phase 4 — Telegram Expansion (after Phases 1–3 are stable)
 
-- [ ] Telegram channel adapter reusing the same wizard, privacy layer, and vertical package
+- [x] Telegram channel adapter reusing the same wizard, privacy layer, and vertical package — see [06-progress-log.md](./06-progress-log.md)
 - **Rationale:** low-competition wedge, upside rather than urgent
-- **Blocked** — no base conversational booking bot exists for any channel yet; see 01-milestones.md and 06-progress-log.md.
+- **Note:** built as a full working conversational bot (not just an adapter shell), since no base bot existed for any channel; needs a real @BotFather token to go live. See 01-milestones.md and 06-progress-log.md.
 
 ---
 
@@ -51,7 +51,7 @@ Removes manual setup as the growth bottleneck.
 - [ ] Confirm what calendar/practice-management system the clinic actually uses — same
 - [ ] Send a low-pressure introductory note — same, an outreach action, not code
 - [x] Scope and build the **check-in module** (token reused as arrival credential — see Phase 0/1 dependencies) — see [06-progress-log.md](./06-progress-log.md)
-- [ ] Run a free, parallel (non-disruptive) pilot — needs a real clinic + the base conversational bot
+- [ ] Run a free, parallel (non-disruptive) pilot — bot is built; needs a real clinic relationship + a real bot token
 - [ ] Capture before/after metrics for a case study — needs real pilot data
 - [ ] Turn the pilot into a referenceable case study — needs real pilot data
 

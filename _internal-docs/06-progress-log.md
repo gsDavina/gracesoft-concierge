@@ -454,3 +454,106 @@ conversational booking bot next** (and if so, for which channel first) — this 
 large enough chunk of new work, with real product-sequencing implications, that it
 deserves an explicit decision rather than an autonomous one. See the message sent
 alongside this commit.
+
+**User's decision**: build it now, Telegram first.
+
+## 2026-09-18 — Phase 4: the actual Telegram booking bot
+
+**New data model**: `ChannelIdentity` (maps a Telegram chat id to the same opaque token
+used everywhere else, so a returning booker isn't asked for their name/phone again — the
+*only* place a channel-native user id is stored; `Identity`/`Booking` still never see
+it) and `TelegramSession` (per-chat conversation state, since a webhook handler is
+stateless between HTTP requests). Migration `20260918053326_telegram_bot`, generated
+and applied against the real local Postgres.
+
+**New `AvailabilityService`** (`apps/api/src/modules/booking/availabilityService.ts`) —
+the missing piece identified in the blocker writeup above: turns a business's
+*published* Blueprint (hours + services) into actual bookable slots.
+`listOpenDates()` walks the next 7 days, keeping ones the business is open on
+(per-weekday hours) and not a public holiday (reuses the exact same `HolidayProvider`
+from Phase 1 — no duplicated holiday logic). `listSlots()` generates candidate start
+times stepped by the chosen service's `durationMinutes` (default 30) and excludes any
+that overlap an existing non-cancelled booking. New `zonedTimeToUtc()`
+(`apps/api/src/lib/timezone.ts`) converts a business-local wall-clock date+time into
+the correct UTC instant using only `Intl.DateTimeFormat` (no date library dependency),
+mirroring the dependency-light approach already used for `toLocalDateString`.
+**Deliberate simplification, stated in the module's doc comment**: one booking blocks
+that time across the *entire* business regardless of service — there's no
+doctor/room/resource concept in the schema, so this only really fits a single-provider
+clinic. A multi-doctor clinic would need a resource dimension added before this scales
+past a solo-GP pilot.
+
+**Telegram bot** (`apps/api/src/modules/telegram/`):
+- `TelegramClient` interface, same swappable-seam pattern as every other external
+  dependency in this codebase. `TelegramBotApiClient` is the real implementation (plain
+  HTTPS calls to `api.telegram.org` — the Bot API needs no SDK). `LoggingTelegramClient`
+  is the no-token fallback (logs instead of sending), so the entire conversation flow is
+  testable — including via a simulated webhook POST against a real Postgres — without a
+  real bot account, the same "GoogleCalendarAdapter-style honest stub" pattern used
+  throughout this codebase.
+- `TelegramBotService` — the actual conversation: `/book` -> pick a service (buttons,
+  from the published Blueprint) -> pick a date (buttons, from `AvailabilityService`) ->
+  pick a time (buttons) -> if this chat has booked before, book immediately using their
+  existing token; if not, ask for name then phone, create an `Identity` +
+  `ChannelIdentity`, then book. `/cancel` resets. Re-validates the chosen slot is still
+  free immediately before booking (a second `listSlots` call) to catch a race against
+  another booker taking the same time between the button tap and the final message.
+  Catches `HolidayBlockedError` from `BookingService` specifically (shouldn't happen
+  since slots are pre-filtered, but defensive) vs. any other failure, and — a bug I
+  found and fixed while testing — **every non-holiday booking failure is now reported
+  to an injected `onError` callback** wired to `app.log.error` in production; the first
+  version of this code swallowed the real error entirely, which would have made a real
+  production bug invisible behind a generic "something went wrong" message to the
+  booker with nothing in the logs to debug from.
+- `POST /webhooks/telegram` — public and unauthenticated by necessity (Telegram calls
+  it directly), protected by verifying Telegram's `X-Telegram-Bot-Api-Secret-Token`
+  header against `TELEGRAM_WEBHOOK_SECRET`; refuses all traffic (404) if that secret or
+  `TELEGRAM_BUSINESS_ID` (which business this bot instance serves — one bot per
+  business, a pilot-scale simplification stated in the service's doc comment) isn't
+  configured, rather than silently accepting unverified calls. Always acks 200 quickly
+  and logs (doesn't throw) on a handling failure, since Telegram retries a webhook that
+  doesn't ack fast.
+- New env vars (`TELEGRAM_BOT_TOKEN`, `TELEGRAM_WEBHOOK_SECRET`, `TELEGRAM_BUSINESS_ID`)
+  added to `lib/env.ts` and `.env.example`. New
+  `apps/api/scripts/telegram-set-webhook.mjs` — the one-time `setWebhook` call needed
+  to point a real bot at a deployment, once a real token and public URL exist.
+
+**Bug found and fixed while writing tests, not just while running the app**: the
+first test-fake `db.booking.create()` omitted `createdAt`/`updatedAt`, which
+`BookingService`'s real `toBookingDto()` needs — surfaced as a generic "something went
+wrong" failure message with no detail, specifically *because* the error was being
+swallowed (see above). Fixing the error-swallowing bug first is what made the actual
+fake-db bug visible instead of a silent false negative.
+
+**Verified**:
+- `pnpm --filter @gracesoft/api test` — 40/40 passing (10 new:
+  `availabilityService.test.ts` covers slot generation, overlap exclusion, closed days,
+  no-published-blueprint, and open-dates skipping both closed weekdays and holidays;
+  `telegramBotService.test.ts` simulates three full conversations — a brand-new
+  booker through every step, a returning booker skipping straight to time selection,
+  and `/cancel` mid-flow — against a hand-rolled fake Prisma client and a fake
+  `TelegramClient` that records every message/buttons sent). `pnpm typecheck` — 10/10.
+- **Real end-to-end, not just unit tests**: seeded a business via
+  `scripts/seed-dev.mjs`, published the Phase 2 clinic blueprint template through the
+  real onboarding API, ran `apps/api` for real against local Postgres, and drove the
+  actual webhook endpoint with curl exactly as Telegram would call it: `/book` ->
+  tapped "General Consultation" -> tapped a date -> tapped a 15-minute-stepped time slot
+  (confirmed the step size came from the service's real `durationMinutes: 15`) ->
+  answered name "Priya Kumar" -> answered a phone number -> got the confirmation
+  message. Then queried Postgres directly and confirmed: the `bookings` row has only
+  token/service/time/status/channel — no name; the `identities` row's `encryptedName`
+  column is genuine ciphertext, not "Priya Kumar" in the clear; `channel_identities`
+  correctly maps the simulated chat id to that same token. Ran the flow a second time
+  for the same simulated chat id and confirmed it skipped straight from time-selection
+  to a confirmed booking with no name/phone prompt, reusing the same token. Confirmed
+  the webhook returns 401 for a missing or wrong secret-token header. Cleaned up all
+  seeded/test data afterward.
+
+**Still needs, to actually go live** (stated plainly, not glossed over): a real
+Telegram bot token from @BotFather (this environment cannot create one — same kind of
+account-creation gap as `GoogleCalendarAdapter`'s Google Cloud project), a publicly
+reachable HTTPS URL for the webhook (a real deployment, or a tunnel for testing), and
+running `telegram-set-webhook.mjs` once both exist.
+
+Phase 4 is checked off in [01-milestones.md](./01-milestones.md) as "built," with that
+go-live caveat stated clearly rather than implied.

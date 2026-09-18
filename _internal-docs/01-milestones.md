@@ -38,20 +38,17 @@ Removes manual setup as the growth bottleneck.
 
 ## Phase 4 — Telegram Expansion (after Phases 1–3 are stable)
 
-- [ ] Telegram channel adapter reusing the same wizard, privacy layer, and vertical package
+- [x] Telegram channel adapter reusing the same wizard, privacy layer, and vertical package — see [06-progress-log.md](./06-progress-log.md)
 - **Rationale:** low-competition wedge, upside rather than urgent
-- **Blocked** (2026-09-18): "reusing the same wizard, privacy layer, and vertical
-  package" assumes a working booking bot already exists for the *primary* channel
-  (WhatsApp) that Telegram just adds a second surface to. That bot — the actual
-  conversational booking flow a patient would message — doesn't exist anywhere in this
-  codebase yet: no webhook routes, no conversation/session state, no slot-availability
-  concept (`BookingService.create` takes an exact ISO time, there's no "list open
-  times" capability for a chat flow to offer). Everything built through Phases 0–3 is
-  real, working supporting infrastructure (privacy layer, onboarding wizard, admin
-  tools, trust/demo surface) *around* that bot, not the bot itself. Building a Telegram
-  adapter with nothing real for it to adapt *to* would be a hollow stub — see
-  [06-progress-log.md](./06-progress-log.md) for the full writeup and the question put
-  to the user about whether to scope and build the base conversational bot next.
+- **Note** (2026-09-18): this was found blocked on a bigger gap — no conversational
+  booking bot existed for *any* channel yet, not just Telegram (no webhook routes, no
+  conversation state, no slot-availability concept). The user chose to build the real
+  thing rather than skip it: a working Telegram bot (webhook, session state, a new
+  `AvailabilityService` for real slot-listing, identity capture for first-time bookers,
+  reuse of the existing privacy layer/holiday-blocking/published-blueprint content) —
+  see 06-progress-log.md for the full writeup and end-to-end verification. Still needs a
+  real bot token from @BotFather to actually go live (this environment can't create
+  one) — falls back to logging replies instead of sending them until then.
 
 ---
 
@@ -62,7 +59,7 @@ Removes manual setup as the growth bottleneck.
 - [ ] Confirm what calendar/practice-management system the clinic actually uses — same; needs real clinic input.
 - [ ] Send a low-pressure introductory note (not pitched during a clinical visit) — same; this is an outreach action for the founder, not code.
 - [x] Scope and build the **check-in module** (token reused as arrival credential — see Phase 0/1 dependencies) — see [06-progress-log.md](./06-progress-log.md)
-- [ ] Run a free, parallel (non-disruptive) pilot — needs a real clinic relationship; also needs the base conversational bot (see Phase 4 blocker above) to actually be pilotable.
+- [ ] Run a free, parallel (non-disruptive) pilot — the technical blocker is resolved (the Telegram bot is built, see Phase 4); what's left needs a real clinic relationship and a real Telegram bot token, neither of which this session can create.
 - [ ] Capture before/after metrics (staff time, wait time, after-hours coverage) for a case study — needs real pilot data.
 - [ ] Turn the pilot into a referenceable case study for outreach to the next 20–30 clinics — needs real pilot data.
 

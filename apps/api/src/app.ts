@@ -11,13 +11,17 @@ import { EnvKeyProvider, type KeyProvider } from "./modules/identity/keyProvider
 import { IdentityService } from "./modules/identity/identityService.js";
 import { InMemoryCalendarAdapter, type CalendarAdapter } from "./modules/booking/calendarAdapter.js";
 import { BookingService } from "./modules/booking/bookingService.js";
+import { AvailabilityService } from "./modules/booking/availabilityService.js";
 import { NagerDateHolidayProvider, type HolidayProvider } from "./modules/holiday/holidayProvider.js";
 import { AnthropicLlmProvider, HeuristicLlmProvider, type LlmProvider } from "./modules/onboarding/llmProvider.js";
 import { OnboardingService } from "./modules/onboarding/onboardingService.js";
+import { LoggingTelegramClient, TelegramBotApiClient, type TelegramClient } from "./modules/telegram/telegramClient.js";
+import { TelegramBotService } from "./modules/telegram/telegramBotService.js";
 import identityRoutes from "./routes/identity.js";
 import bookingRoutes from "./routes/bookings.js";
 import holidayRoutes from "./routes/holidays.js";
 import onboardingRoutes from "./routes/onboarding.js";
+import telegramWebhookRoutes from "./routes/telegramWebhook.js";
 import healthRoutes from "./routes/health.js";
 
 export interface BuildAppOptions {
@@ -27,6 +31,7 @@ export interface BuildAppOptions {
   calendarAdapter?: CalendarAdapter;
   holidayProvider?: HolidayProvider;
   llmProvider?: LlmProvider;
+  telegramClient?: TelegramClient;
 }
 
 /**
@@ -63,12 +68,31 @@ export async function buildApp(opts: BuildAppOptions = {}): Promise<FastifyInsta
   const identityService = new IdentityService(db, keyProvider);
   const bookingService = new BookingService(db, calendarAdapter, holidayProvider);
   const onboardingService = new OnboardingService(db, llmProvider);
+  const availabilityService = new AvailabilityService(db, holidayProvider);
+
+  const telegramClient =
+    opts.telegramClient ?? (env.TELEGRAM_BOT_TOKEN ? new TelegramBotApiClient(env.TELEGRAM_BOT_TOKEN) : new LoggingTelegramClient((line) => app.log.info(line)));
+  if (!opts.telegramClient && !env.TELEGRAM_BOT_TOKEN && env.TELEGRAM_BUSINESS_ID) {
+    app.log.warn("TELEGRAM_BOT_TOKEN not set — Telegram bot replies are logged, not actually sent");
+  }
+  const telegramBotService = env.TELEGRAM_BUSINESS_ID
+    ? new TelegramBotService(
+        db,
+        env.TELEGRAM_BUSINESS_ID,
+        identityService,
+        bookingService,
+        availabilityService,
+        telegramClient,
+        (err) => app.log.error({ err }, "telegram bot: booking failed"),
+      )
+    : null;
 
   await app.register(healthRoutes);
   await app.register(identityRoutes, { identityService });
   await app.register(bookingRoutes, { bookingService });
   await app.register(holidayRoutes, { db, holidayProvider });
   await app.register(onboardingRoutes, { db, onboardingService });
+  await app.register(telegramWebhookRoutes, { telegramBotService, webhookSecret: env.TELEGRAM_WEBHOOK_SECRET });
 
   return app;
 }

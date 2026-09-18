@@ -75,6 +75,7 @@ model Business {
   retentionPolicy   RetentionPolicy?
   onboardingSources OnboardingSource[]
   blueprint         Blueprint?
+  channelIdentities ChannelIdentity[]
 
   @@map("businesses")
 }
@@ -243,4 +244,45 @@ model Blueprint {
   updatedAt DateTime @updatedAt
 
   @@map("blueprints")
+}
+
+/// Phase 4 (Telegram Expansion): maps a channel-native user id (e.g. a Telegram chat id)
+/// to the opaque booking token already used everywhere else, so a returning booker isn't
+/// asked for their name/phone again. This table — not Identity or Booking — is the only
+/// place a channel user id is stored, keeping the privacy boundary intact: Identity still
+/// never learns which chat a booker messaged from, and Booking/calendar records still
+/// never carry anything but the token.
+model ChannelIdentity {
+  id            String         @id @default(cuid())
+  businessId    String
+  business      Business       @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  channel       BookingChannel
+  /// Channel-native user id — e.g. a Telegram chat id, or a WhatsApp phone number.
+  channelUserId String
+
+  /// The same opaque token stored on Identity/Booking rows for this booker.
+  token         String
+
+  createdAt DateTime @default(now())
+
+  @@unique([businessId, channel, channelUserId])
+  @@index([businessId, token])
+  @@map("channel_identities")
+}
+
+/// In-progress conversation state for a single Telegram chat, so a stateless webhook
+/// handler can pick up where the last message left off. Short-lived by nature — cleared
+/// once a booking completes or /cancel is sent.
+model TelegramSession {
+  chatId     String   @id
+  businessId String
+
+  /// { step: "service" | "date" | "time" | "awaiting_name" | "awaiting_phone",
+  ///   serviceType?, date?, time?, pendingName? }
+  state      Json
+
+  updatedAt DateTime @updatedAt
+
+  @@map("telegram_sessions")
 }

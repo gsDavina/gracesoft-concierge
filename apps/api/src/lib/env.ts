@@ -24,8 +24,18 @@ const envSchema = z.object({
   WHATSAPP_VERIFY_TOKEN: z.string().optional(),
   WHATSAPP_APP_SECRET: z.string().optional(),
 
-  // Telegram Bot API (Phase 4).
+  // Telegram Bot API (Phase 4). TELEGRAM_BOT_TOKEN is required to actually send
+  // messages (from @BotFather); without it apps/api falls back to LoggingTelegramClient
+  // (modules/telegram/telegramClient.ts), which logs instead of calling Telegram, so the
+  // bot's conversation logic stays fully exercisable without a real bot account.
+  // TELEGRAM_WEBHOOK_SECRET is the secret token Telegram echoes back in the
+  // X-Telegram-Bot-Api-Secret-Token header on every webhook call — required to accept
+  // any webhook traffic at all, since that endpoint is otherwise unauthenticated.
+  // TELEGRAM_BUSINESS_ID is which business this bot instance serves — one bot per
+  // business, see telegramBotService.ts.
+  TELEGRAM_BOT_TOKEN: z.string().optional(),
   TELEGRAM_WEBHOOK_SECRET: z.string().optional(),
+  TELEGRAM_BUSINESS_ID: z.string().optional(),
 
   // Phase 1 onboarding wizard auto-draft step. Without this, the app falls back to
   // HeuristicLlmProvider (modules/onboarding/llmProvider.ts) — a real but low-quality

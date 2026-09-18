@@ -11,7 +11,8 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "lint": "eslint src --ext .ts",
     "test": "vitest run",
-    "seed:dev": "node scripts/seed-dev.mjs"
+    "seed:dev": "node scripts/seed-dev.mjs",
+    "telegram:set-webhook": "node scripts/telegram-set-webhook.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.126.0",
