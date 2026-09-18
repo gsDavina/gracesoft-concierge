@@ -1,11 +1,13 @@
 import type {
   GenerateDraftResponse,
   GetBlueprintResponse,
+  GetVerticalTemplateResponse,
   ListSourcesResponse,
   PublishBlueprintResponse,
   SubmitSourceResponse,
   UpdateBlueprintRequest,
   UpdateBlueprintResponse,
+  VerticalTemplateName,
 } from "@gracesoft/shared-types";
 import { requireOwner } from "@gracesoft/auth";
 import type { PrismaClient } from "@gracesoft/db";
@@ -13,6 +15,11 @@ import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { requireAuth } from "../plugins/auth.js";
 import type { OnboardingService } from "../modules/onboarding/onboardingService.js";
+import { CLINIC_BLUEPRINT_TEMPLATE } from "../modules/onboarding/verticalTemplates.js";
+
+const VERTICAL_TEMPLATES: Record<VerticalTemplateName, GetVerticalTemplateResponse["template"]> = {
+  clinic: CLINIC_BLUEPRINT_TEMPLATE,
+};
 
 const MAX_UPLOAD_BYTES = 5 * 1024 * 1024; // 5MB — plain text/markdown only, see textExtraction.ts
 
@@ -96,6 +103,25 @@ export default async function onboardingRoutes(fastify: FastifyInstance, opts: O
 
       const sources = await opts.onboardingService.listSources(request.params.businessId);
       return { sources };
+    },
+  );
+
+  // --- Phase 2: pre-built vertical templates --------------------------------------------
+
+  fastify.get<{ Params: { businessId: string; name: string }; Reply: GetVerticalTemplateResponse }>(
+    "/businesses/:businessId/vertical-templates/:name",
+    async (request, reply) => {
+      const actor = await requireAuth(request);
+      requireOwner(actor);
+      if (actor.businessId !== request.params.businessId) {
+        return reply.forbidden("Actor does not belong to this business");
+      }
+
+      const template = VERTICAL_TEMPLATES[request.params.name as VerticalTemplateName];
+      if (!template) {
+        return reply.notFound(`No vertical template named "${request.params.name}"`);
+      }
+      return { template };
     },
   );
 

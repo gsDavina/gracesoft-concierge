@@ -14,6 +14,7 @@ import {
   ApiError,
   fetchBlueprint,
   fetchOnboardingSources,
+  fetchVerticalTemplate,
   generateBlueprintDraft,
   publishBlueprint,
   submitDocumentSource,
@@ -150,6 +151,26 @@ export default function BlueprintPage() {
     }
   }
 
+  async function handleLoadClinicTemplate() {
+    if (!actor) return;
+    setBusy("loading template");
+    setError(null);
+    setNotice(null);
+    try {
+      const { template } = await fetchVerticalTemplate(actor, "clinic");
+      setServices(template.services);
+      setHours(template.hours.length > 0 ? template.hours : emptyHours());
+      setFaqs(template.faqs);
+      setNotice(
+        "Clinic template loaded — this is generic placeholder content. Edit the fees, hours, and policies below before saving.",
+      );
+    } catch (err) {
+      if (!handleAuthError(err)) setError(err instanceof Error ? err.message : "Failed to load template");
+    } finally {
+      setBusy(null);
+    }
+  }
+
   async function handleSaveDraft() {
     if (!actor) return;
     setBusy("saving");
@@ -252,6 +273,14 @@ export default function BlueprintPage() {
           style={buttonStyle}
         >
           Generate draft from sources
+        </button>
+
+        <p style={{ color: "var(--muted)", fontSize: 14, marginTop: 16 }}>
+          Or start from a pre-built template for your vertical (Phase 2: Healthcare) —
+          generic placeholder content you edit rather than write from scratch.
+        </p>
+        <button type="button" onClick={handleLoadClinicTemplate} disabled={!!busy} style={buttonStyle}>
+          Load GP clinic template
         </button>
       </section>
 

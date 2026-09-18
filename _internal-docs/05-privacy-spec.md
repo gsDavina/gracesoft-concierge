@@ -72,8 +72,9 @@ document — see the deletion job's own test suite for the behaviors covered.
 
 PDPA-aligned for Singapore-based businesses (data minimization, purpose-limited access,
 enforced retention). HIPAA-aligned framing is available for other markets but not yet
-formally assessed — see Phase 2 (Healthcare Vertical Package) for the DPA template and
-stated compliance posture.
+formally assessed — see the full statement in
+[07-compliance-posture.md](./07-compliance-posture.md) and the accompanying
+[DPA template](./08-dpa-template.md) (Phase 2, Healthcare Vertical Package).
 
 ## What this spec does not cover
 

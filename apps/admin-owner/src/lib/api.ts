@@ -4,6 +4,7 @@ import type {
   BlueprintContentInput,
   GenerateDraftResponse,
   GetBlueprintResponse,
+  GetVerticalTemplateResponse,
   ListBookingsResponse,
   ListHolidaysResponse,
   ListSourcesResponse,
@@ -11,6 +12,7 @@ import type {
   SubmitSourceResponse,
   TokenLookupResponse,
   UpdateBlueprintResponse,
+  VerticalTemplateName,
 } from "@gracesoft/shared-types";
 import { getBearerToken } from "./session";
 
@@ -114,6 +116,16 @@ export async function submitDocumentSource(
     throw new ApiError(res.status, body.message ?? "Upload failed");
   }
   return res.json() as Promise<SubmitSourceResponse>;
+}
+
+export function fetchVerticalTemplate(
+  actor: AuthenticatedActor,
+  name: VerticalTemplateName,
+): Promise<GetVerticalTemplateResponse> {
+  return request<GetVerticalTemplateResponse>(
+    `/businesses/${encodeURIComponent(actor.businessId)}/vertical-templates/${name}`,
+    actor,
+  );
 }
 
 export function generateBlueprintDraft(actor: AuthenticatedActor): Promise<GenerateDraftResponse> {

@@ -286,3 +286,56 @@ largely content/product decisions (a clinic FAQ template, DPA template, stated
 compliance posture, pricing numbers) rather than pure engineering — flagging that before
 starting, since several of those items need a business decision (what to charge, what
 compliance claims to actually stand behind) that isn't mine to make unilaterally.
+
+## 2026-09-18 — Phase 2 (Healthcare Vertical Package): 3 of 4 items
+
+**Implemented and verified**:
+- `CLINIC_BLUEPRINT_TEMPLATE` (`apps/api/src/modules/onboarding/verticalTemplates.ts`) —
+  a pre-built GP-clinic starting point (4 services, standard weekly hours, 6 FAQs
+  including insurance/payment, cancellation policy, confidentiality, and an explicit
+  "no diagnosis/prescription through this chat" disclaimer). New owner-gated `GET
+  /businesses/:businessId/vertical-templates/:name` route; new "Load GP clinic template"
+  button on the `/blueprint` page loads it into the same editable draft state as an
+  LLM-generated draft — an owner still has to review, edit, and explicitly publish it,
+  same human-in-the-loop gate as everything else in Phase 1. Unit test
+  (`verticalTemplates.test.ts`) validates the template against the same zod schema the
+  LLM output is validated against, and checks the confidentiality/no-diagnosis FAQs are
+  actually present (not just "some FAQs exist"). Verified in a real browser: clicked
+  "Load GP clinic template," confirmed all 4 services / 7 weekday rows / 6 FAQs
+  rendered, no console errors.
+- [07-compliance-posture.md](./07-compliance-posture.md) — expands the one-paragraph
+  compliance mention in 05-privacy-spec.md into PDPA and HIPAA-aligned-framing tables
+  mapped to specific things this codebase actually does (encryption, audit logging,
+  retention), explicitly states what's *not* covered (no booker-facing consent/
+  self-service deletion flow exists yet — see the blocked item below), and gives
+  suggested pitch-conversation language that says "aligned with," not "compliant."
+- [08-dpa-template.md](./08-dpa-template.md) — a DPA template with the standard
+  processor-obligation sections (sub-processors, breach notification, data-subject-
+  rights assistance, audit rights), each mapped back to a real mechanism in the codebase
+  where one exists, and clearly bracketed `[...]` where a real business/legal decision
+  is still needed (entity names, jurisdiction, sub-processor confirmation, liability
+  terms). **Both documents are explicitly marked as drafts requiring qualified legal
+  review before use with a real clinic** — I'm not a lawyer and didn't attempt to write
+  binding legal terms; I wrote a structured starting point mapped to this system's actual
+  behavior, which is what "DPA template drafted" as an engineering-adjacent deliverable
+  reasonably means.
+
+**Left unchecked, deliberately** — "Booking flow copy adjusted for healthcare context
+(confidentiality language, no diagnostic content)": there is no booker-facing
+conversational flow to put this copy *in* yet. I checked — no WhatsApp/Telegram webhook
+routes, no outbound-messaging module, nothing patient-facing exists anywhere in this
+codebase; `apps/admin-kiosk` and `apps/admin-owner` are both staff-facing tools, not the
+booking bot itself. Building a standalone "message templates" module with nothing to
+consume it would be exactly the kind of speculative, unused abstraction I should avoid.
+The confidentiality/no-diagnosis language this item is asking for **is already written**
+in the clinic blueprint template's FAQs above, since that's the one place in the current
+system where booker-facing healthcare-context copy actually lives — but the fuller
+"booking flow copy" (bot conversation strings) can't be adjusted until the bot itself is
+built. That's a materially larger undertaking (a real WhatsApp/Telegram integration) not
+covered by any Phase 0/1 item that's actually been implemented, so I'm flagging the gap
+rather than inventing an unused module to make the checkbox green.
+
+**Verified**: `pnpm typecheck` 9/9, `pnpm --filter @gracesoft/api test` 32/32 (2 new).
+
+Phase 2 is 3/4 checked off in [01-milestones.md](./01-milestones.md) — the remaining
+item is blocked on work outside this session's scope, not skipped.

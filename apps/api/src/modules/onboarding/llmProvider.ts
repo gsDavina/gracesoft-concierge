@@ -11,7 +11,7 @@ export interface LlmProvider {
   extractBlueprint(input: { businessName: string; sourceTexts: string[] }): Promise<BlueprintContentInput>;
 }
 
-const blueprintContentSchema = z.object({
+export const blueprintContentSchema = z.object({
   services: z.array(
     z.object({
       name: z.string(),

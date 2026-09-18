@@ -96,3 +96,8 @@ export interface PublishBlueprintRequest {
 export interface PublishBlueprintResponse {
   blueprint: Blueprint;
 }
+
+export type VerticalTemplateName = "clinic";
+export interface GetVerticalTemplateResponse {
+  template: BlueprintContentInput;
+}
