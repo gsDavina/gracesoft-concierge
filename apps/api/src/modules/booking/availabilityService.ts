@@ -70,6 +70,14 @@ export class AvailabilityService {
     return services.map((s) => ({ name: s.name }));
   }
 
+  /** FAQs from the business's published blueprint — the vertical-specific context (e.g.
+   * a clinic's confidentiality/no-diagnosis copy) surfaced to a real booker via /faq. */
+  async listPublishedFaqs(businessId: string): Promise<{ question: string; answer: string }[]> {
+    const blueprint = await this.db.blueprint.findFirst({ where: { businessId, status: "published" } });
+    if (!blueprint) return [];
+    return blueprint.faqs as unknown as { question: string; answer: string }[];
+  }
+
   /** Open time slots for a specific service on a specific date, excluding already-booked times. */
   async listSlots(businessId: string, serviceType: string, date: string): Promise<Slot[]> {
     const business = await this.db.business.findUniqueOrThrow({

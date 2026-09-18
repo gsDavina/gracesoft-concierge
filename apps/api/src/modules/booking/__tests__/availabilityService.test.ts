@@ -12,6 +12,7 @@ interface FakeBlueprint {
   status: "draft" | "published";
   services: unknown;
   hours: unknown;
+  faqs?: unknown;
 }
 interface FakeBooking {
   startsAt: Date;
@@ -58,7 +59,32 @@ const PUBLISHED_BLUEPRINT: FakeBlueprint = {
     { day: "monday", opens: "09:00", closes: "11:00" },
     { day: "tuesday", closed: true },
   ],
+  faqs: [{ question: "Is this confidential?", answer: "Yes." }],
 };
+
+describe("AvailabilityService.listPublishedFaqs", () => {
+  it("returns the published blueprint's FAQs", async () => {
+    const db = makeFakeDb({
+      businesses: [{ id: "biz-1", region: "SG", timezone: "Asia/Singapore" }],
+      blueprints: [PUBLISHED_BLUEPRINT],
+      bookings: [],
+    });
+    const service = new AvailabilityService(db, new StaticHolidayProvider());
+
+    expect(await service.listPublishedFaqs("biz-1")).toEqual([{ question: "Is this confidential?", answer: "Yes." }]);
+  });
+
+  it("returns an empty list when there is no published blueprint", async () => {
+    const db = makeFakeDb({
+      businesses: [{ id: "biz-1", region: "SG", timezone: "Asia/Singapore" }],
+      blueprints: [],
+      bookings: [],
+    });
+    const service = new AvailabilityService(db, new StaticHolidayProvider());
+
+    expect(await service.listPublishedFaqs("biz-1")).toEqual([]);
+  });
+});
 
 describe("AvailabilityService.listSlots", () => {
   it("generates 30-minute slots across the open window when nothing is booked", async () => {

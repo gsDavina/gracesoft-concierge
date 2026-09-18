@@ -557,3 +557,55 @@ running `telegram-set-webhook.mjs` once both exist.
 
 Phase 4 is checked off in [01-milestones.md](./01-milestones.md) as "built," with that
 go-live caveat stated clearly rather than implied.
+
+## 2026-09-18 — Closing the loop: Phase 2's last item, unblocked by Phase 4
+
+The one remaining Phase 2 item — "Booking flow copy adjusted for healthcare context
+(confidentiality language, no diagnostic content)" — was left unchecked earlier today
+specifically because there was no conversational flow to put that copy *in*. Now there
+is one. Revisited it rather than leaving it stale.
+
+**What I didn't do**: hardcode healthcare-specific strings ("we can't diagnose you",
+etc.) into `TelegramBotService`'s core conversation logic. Concierge is a multi-vertical
+product — baking clinic-specific disclaimers into the generic booking flow would be
+wrong for a non-healthcare business using the same bot code.
+
+**What I did instead**: added a `/faq` (and `/help`) command that surfaces the
+business's own *published* Blueprint FAQs as buttons — the exact healthcare-context
+copy (confidentiality, "no diagnosis through this chat", emergency guidance) already
+written into `CLINIC_BLUEPRINT_TEMPLATE` back in the Phase 2 entry above is now
+reachable by a real booker, for any business that has that content in its blueprint,
+not just healthcare ones. `AvailabilityService.listPublishedFaqs()` is the new read
+path (same "published blueprint" pattern as `listPublishedServices`). Also added one
+generically-true privacy line (not healthcare-specific — it's just what the Phase 0
+architecture actually does) to the first-time-booker name prompt: "Your name and phone
+number are stored securely and kept separate from the appointment calendar — see /faq
+for more," and pointed to `/faq` from the welcome, fallback, and booking-confirmation
+messages so it's discoverable. `/faq` deliberately doesn't touch in-progress booking
+session state, so asking a question mid-booking doesn't lose your place — tested
+explicitly.
+
+**Verified**: `pnpm --filter @gracesoft/api test` — 44/44 (4 new: `listPublishedFaqs`
+returns published FAQs / empty list without a published blueprint;
+`TelegramBotService` lists FAQs and answers the one tapped, and confirmed `/faq`
+mid-booking doesn't disrupt the in-progress flow). `pnpm typecheck` — 10/10.
+
+**Unrelated but worth recording**: partway through this work, a system notice reported
+that `01-milestones.md` had been overwritten on disk with entirely unrelated content —
+a different, unrelated project's milestones file (something called
+`davdevs-assistant`, a Telegram-bridge tool for Claude Code hooks — not anything in
+this repo or its history). I stopped and verified with `git diff`/`git status` before
+touching anything further; by the time I checked, the file already matched the last
+commit again, so nothing was actually lost, and no commit of mine ever contained that
+content. Flagged to the user directly rather than silently continuing — this looked
+like a different, unrelated Claude Code session briefly writing to the same file path
+by coincidence, though the exact cause is unconfirmed.
+
+**Phase 2 is now fully checked off** in [01-milestones.md](./01-milestones.md) — all
+four items, no remaining blockers. Combined with Phases 0, 1, 3, and 4 all being
+checked off too, every checklist item that is actually an engineering/content task has
+now been completed. What remains across the whole document is exclusively: (a) real
+pricing numbers (a business decision, deliberately left as placeholders per the user's
+choice), and (b) the Pilot Track's outreach/relationship items, which require the
+founder's direct action with a real clinic and cannot be performed by an engineering
+agent.

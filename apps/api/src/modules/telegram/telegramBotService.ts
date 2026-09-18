@@ -60,6 +60,10 @@ export class TelegramBotService {
       await this.telegram.sendMessage(chatId, "Okay, cancelled. Type /book to start a new booking.");
       return;
     }
+    if (lower === "/faq" || lower === "/help") {
+      await this.promptFaq(chatId);
+      return;
+    }
 
     const state = await this.getState(chatId);
     if (state.step === "awaiting_name") {
@@ -80,7 +84,7 @@ export class TelegramBotService {
       return;
     }
 
-    await this.telegram.sendMessage(chatId, "Type /book to book an appointment.");
+    await this.telegram.sendMessage(chatId, "Type /book to book an appointment, or /faq for common questions.");
   }
 
   private async handleCallback(
@@ -110,6 +114,10 @@ export class TelegramBotService {
       const state = await this.getState(chatId);
       if (state.step !== "time") return;
       await this.handleTimeChosen(chatId, state.serviceType, state.date, value);
+      return;
+    }
+    if (kind === "faq") {
+      await this.answerFaq(chatId, Number(value));
     }
   }
 
@@ -127,6 +135,27 @@ export class TelegramBotService {
       { text: s.name, callbackData: `svc:${s.name}` },
     ]);
     await this.telegram.sendMessage(chatId, "Which service would you like to book?", buttons);
+  }
+
+  /** Phase 2 (Healthcare Vertical Package): surfaces the business's published FAQs —
+   * e.g. a clinic's confidentiality/no-diagnosis copy — as an on-demand command, rather
+   * than hardcoding any vertical's specific wording into the bot's core flow. Doesn't
+   * touch booking-in-progress session state, so it's safe to use mid-flow. */
+  private async promptFaq(chatId: string): Promise<void> {
+    const faqs = await this.availability.listPublishedFaqs(this.businessId);
+    if (faqs.length === 0) {
+      await this.telegram.sendMessage(chatId, "No FAQs are set up for this business yet. Type /book to book an appointment.");
+      return;
+    }
+    const buttons: InlineKeyboardButton[][] = faqs.map((f, i) => [{ text: f.question, callbackData: `faq:${i}` }]);
+    await this.telegram.sendMessage(chatId, "What would you like to know?", buttons);
+  }
+
+  private async answerFaq(chatId: string, index: number): Promise<void> {
+    const faqs = await this.availability.listPublishedFaqs(this.businessId);
+    const faq = faqs[index];
+    if (!faq) return;
+    await this.telegram.sendMessage(chatId, `${faq.question}\n\n${faq.answer}\n\nType /book to book an appointment.`);
   }
 
   private async promptDate(chatId: string, serviceType: string): Promise<void> {
@@ -163,7 +192,11 @@ export class TelegramBotService {
     }
 
     await this.setState(chatId, { step: "awaiting_name", serviceType, date, time });
-    await this.telegram.sendMessage(chatId, "First time booking with us here — what's your name?");
+    await this.telegram.sendMessage(
+      chatId,
+      "First time booking with us here — what's your name? (Your name and phone number are " +
+        "stored securely and kept separate from the appointment calendar — see /faq for more.)",
+    );
   }
 
   private async completeNewBookerBooking(
@@ -207,7 +240,8 @@ export class TelegramBotService {
       await this.setState(chatId, IDLE_STATE);
       await this.telegram.sendMessage(
         chatId,
-        `You're booked: ${serviceType} on ${date} at ${time}. We'll see you then! Type /book to make another booking.`,
+        `You're booked: ${serviceType} on ${date} at ${time}. We'll see you then! Type /book to make ` +
+          "another booking, or /faq for common questions.",
       );
     } catch (err) {
       await this.setState(chatId, IDLE_STATE);

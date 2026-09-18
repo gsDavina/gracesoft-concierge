@@ -25,7 +25,7 @@ Removes manual setup as the growth bottleneck.
 ## Phase 2 — Healthcare Vertical Package (parallel with Phase 1, 2–4 weeks)
 
 - [x] Pre-built blueprint template for clinic FAQs (insurance, appointment types, cancellation policy) — see [06-progress-log.md](./06-progress-log.md)
-- [ ] Booking flow copy adjusted for healthcare context (confidentiality language, no diagnostic content) — **blocked**: there is no booker-facing conversational flow to put this copy in yet (the WhatsApp/Telegram bot itself hasn't been built — see 06-progress-log.md). Revisit once that channel work exists.
+- [x] Booking flow copy adjusted for healthcare context (confidentiality language, no diagnostic content) — unblocked once the Phase 4 Telegram bot existed; see [06-progress-log.md](./06-progress-log.md)
 - [x] DPA template drafted — see [08-dpa-template.md](./08-dpa-template.md)
 - [x] Stated compliance posture (PDPA-aligned for Singapore; HIPAA-aligned framing if targeting other markets) — see [07-compliance-posture.md](./07-compliance-posture.md)
 - **Deliverable:** pitch-ready vertical package for first 3–5 pilot clinics

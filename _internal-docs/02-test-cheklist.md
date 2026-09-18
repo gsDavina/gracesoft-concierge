@@ -25,7 +25,7 @@ Removes manual setup as the growth bottleneck.
 ## Phase 2 — Healthcare Vertical Package (parallel with Phase 1, 2–4 weeks)
 
 - [x] Pre-built blueprint template for clinic FAQs (insurance, appointment types, cancellation policy) — see [06-progress-log.md](./06-progress-log.md)
-- [ ] Booking flow copy adjusted for healthcare context (confidentiality language, no diagnostic content) — blocked, see 01-milestones.md
+- [x] Booking flow copy adjusted for healthcare context (confidentiality language, no diagnostic content) — see [06-progress-log.md](./06-progress-log.md)
 - [x] DPA template drafted — see [08-dpa-template.md](./08-dpa-template.md)
 - [x] Stated compliance posture (PDPA-aligned for Singapore; HIPAA-aligned framing if targeting other markets) — see [07-compliance-posture.md](./07-compliance-posture.md)
 - **Deliverable:** pitch-ready vertical package for first 3–5 pilot clinics

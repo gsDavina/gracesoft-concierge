@@ -46,6 +46,10 @@ const PUBLISHED_BLUEPRINT = {
   status: "published",
   services: [{ name: "Consultation", durationMinutes: 30 }],
   hours: [{ day: "monday", opens: "09:00", closes: "10:00" }],
+  faqs: [
+    { question: "Is my information confidential?", answer: "Yes, it's encrypted and kept separate." },
+    { question: "Can I get a diagnosis here?", answer: "No, this bot only handles bookings." },
+  ],
 };
 
 function makeFakeDb() {
@@ -240,5 +244,37 @@ describe("TelegramBotService — full booking conversation", () => {
     // as mid-flow input.
     await bot.handleUpdate({ message: { chat: { id: 1 }, text: "hello" } });
     expect(sent.at(-1)?.text).toMatch(/type \/book/i);
+  });
+
+  it("/faq lists the business's published FAQs and answers the one tapped", async () => {
+    const { db } = makeFakeDb();
+    const { client, sent } = makeFakeTelegramClient();
+    const bot = makeService(db, client);
+
+    await bot.handleUpdate({ message: { chat: { id: 2 }, text: "/faq" } });
+    expect(sent.at(-1)?.buttons?.[1]?.[0]).toEqual({
+      text: "Can I get a diagnosis here?",
+      callbackData: "faq:1",
+    });
+
+    await bot.handleUpdate({ callback_query: { id: "cb1", message: { chat: { id: 2 } }, data: "faq:1" } });
+    expect(sent.at(-1)?.text).toContain("No, this bot only handles bookings.");
+  });
+
+  it("/faq does not disturb an in-progress booking's session state", async () => {
+    const { db, bookings } = makeFakeDb();
+    const { client } = makeFakeTelegramClient();
+    const bot = makeService(db, client);
+
+    await bot.handleUpdate({ message: { chat: { id: 3 }, text: "/book" } });
+    await bot.handleUpdate({ callback_query: { id: "cb1", message: { chat: { id: 3 } }, data: "svc:Consultation" } });
+    await bot.handleUpdate({ message: { chat: { id: 3 }, text: "/faq" } });
+    // Resume the booking flow right where it left off (date selection).
+    await bot.handleUpdate({ callback_query: { id: "cb2", message: { chat: { id: 3 } }, data: "date:2026-01-05" } });
+    await bot.handleUpdate({ callback_query: { id: "cb3", message: { chat: { id: 3 } }, data: "time:09:00" } });
+    await bot.handleUpdate({ message: { chat: { id: 3 }, text: "Alex" } });
+    await bot.handleUpdate({ message: { chat: { id: 3 }, text: "+65 9000 0000" } });
+
+    expect(bookings).toHaveLength(1);
   });
 });
