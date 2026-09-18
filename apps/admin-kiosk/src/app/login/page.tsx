@@ -16,7 +16,7 @@ export default function LoginPage() {
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!businessId.trim() || !userId.trim()) return;
-    saveDevSession({ businessId: businessId.trim(), userId: userId.trim(), role: "front-desk" });
+    saveDevSession({ businessId: businessId.trim(), userId: userId.trim(), role: "front_desk" });
     router.push("/");
   }
 

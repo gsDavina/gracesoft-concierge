@@ -5,12 +5,12 @@ Sequenced so each phase de-risks the next. Vertical assumed: healthcare (GP clin
 ## Phase 0 — Privacy Layer (2–3 weeks)
 Foundational; goes first even though it's less visible than the wizard.
 
-- [ ] Separate booker-identity store from calendar-write path (`identities` table, encrypted, vs. `bookings` table with token only)
-- [ ] Calendar events write only: token, service type, time slot — never name/phone/notes
-- [ ] Token-lookup flow: authenticated, logged (who looked up what, when)
-- [ ] Retention/deletion policy written **and implemented** as an actual scheduled job
-- [ ] Per-business encryption keys (not one global key)
-- **Deliverable:** one-page technical privacy spec, usable as sales collateral
+- [x] Separate booker-identity store from calendar-write path (`identities` table, encrypted, vs. `bookings` table with token only)
+- [x] Calendar events write only: token, service type, time slot — never name/phone/notes
+- [x] Token-lookup flow: authenticated, logged (who looked up what, when)
+- [x] Retention/deletion policy written **and implemented** as an actual scheduled job
+- [x] Per-business encryption keys (not one global key)
+- **Deliverable:** one-page technical privacy spec, usable as sales collateral — see [05-privacy-spec.md](./05-privacy-spec.md)
 
 ## Phase 1 — Onboarding Wizard (3–5 weeks)
 Removes manual setup as the growth bottleneck.
@@ -18,7 +18,7 @@ Removes manual setup as the growth bottleneck.
 - [ ] Input step: business submits website URL and/or uploads docs (services, hours, FAQs)
 - [ ] Auto-draft: LLM extracts blueprint content from submitted material
 - [ ] Human-in-the-loop review/edit step before go-live
-- [ ] Public-holiday auto-blocking added to calendar/scheduling logic (by region)
+- [x] Public-holiday auto-blocking added to calendar/scheduling logic (by region) — see [06-progress-log.md](./06-progress-log.md)
 - **Target:** signup → working bot in under 20 minutes, trending toward under 10
 - **Deliverable:** self-serve onboarding flow, no manual blueprint authoring required
 
@@ -49,7 +49,7 @@ Removes manual setup as the growth bottleneck.
 - [ ] Quantify the pain (estimated staff-hours/week lost to manual registration)
 - [ ] Confirm what calendar/practice-management system the clinic actually uses
 - [ ] Send a low-pressure introductory note (not pitched during a clinical visit)
-- [ ] Scope and build the **check-in module** (token reused as arrival credential — see Phase 0/1 dependencies)
+- [x] Scope and build the **check-in module** (token reused as arrival credential — see Phase 0/1 dependencies) — see [06-progress-log.md](./06-progress-log.md)
 - [ ] Run a free, parallel (non-disruptive) pilot
 - [ ] Capture before/after metrics (staff time, wait time, after-hours coverage) for a case study
 - [ ] Turn the pilot into a referenceable case study for outreach to the next 20–30 clinics

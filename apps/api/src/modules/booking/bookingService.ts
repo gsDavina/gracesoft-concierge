@@ -1,14 +1,26 @@
 import type { Booking as DbBooking, PrismaClient } from "@gracesoft/db";
 import type { Booking, CreateBookingInput } from "@gracesoft/shared-types";
 import type { CalendarAdapter } from "./calendarAdapter.js";
+import { toLocalDateString, type HolidayProvider } from "../holiday/holidayProvider.js";
+
+/** Thrown when a booking's date falls on a public holiday blocked for the business's region. */
+export class HolidayBlockedError extends Error {
+  constructor(public readonly holidayName: string) {
+    super(`This date is a public holiday (${holidayName}) and is not bookable.`);
+    this.name = "HolidayBlockedError";
+  }
+}
 
 export class BookingService {
   constructor(
     private readonly db: PrismaClient,
     private readonly calendar: CalendarAdapter,
+    private readonly holidays: HolidayProvider,
   ) {}
 
   async create(input: CreateBookingInput): Promise<Booking> {
+    await this.assertNotOnHoliday(input.businessId, new Date(input.startsAt));
+
     const booking = await this.db.booking.create({
       data: {
         businessId: input.businessId,
@@ -92,6 +104,23 @@ export class BookingService {
       data: { status: "checked_in" },
     });
     return toBookingDto(checkedIn);
+  }
+
+  /** Public-holiday auto-blocking (01-milestones.md Phase 1) — keyed by Business.region. */
+  private async assertNotOnHoliday(businessId: string, startsAt: Date): Promise<void> {
+    const business = await this.db.business.findUnique({
+      where: { id: businessId },
+      select: { region: true, timezone: true },
+    });
+    if (!business) return; // let the FK constraint on booking.create surface the real error
+
+    const localDate = toLocalDateString(startsAt, business.timezone);
+    const year = Number(localDate.slice(0, 4));
+    const holidays = await this.holidays.getHolidays(business.region, year);
+    const match = holidays.find((h) => h.date === localDate);
+    if (match) {
+      throw new HolidayBlockedError(match.name);
+    }
   }
 }
 

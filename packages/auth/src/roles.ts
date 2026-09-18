@@ -23,5 +23,5 @@ export function requireOwner(actor: AuthenticatedActor): void {
 
 /** Front-desk can do everything owner can except the actions gated by requireOwner. */
 export function requireStaff(actor: AuthenticatedActor): void {
-  requireRole(actor, ["owner", "front-desk"]);
+  requireRole(actor, ["owner", "front_desk"]);
 }

@@ -116,3 +116,58 @@ asked so far.
 found"). User chose to re-auth `gh` as `gsDavina`
 (`gh auth login --hostname github.com --web`, run in an interactive terminal) — retry
 the push once that's done.
+
+*Resolved*: re-auth completed, `origin` now points at
+`https://gsDavina@github.com/gsDavina/gracesoft-concierge.git` and all prior commits
+are pushed.
+
+## 2026-09-18 — Phase 1 kickoff: public-holiday auto-blocking
+
+**Fixed a pre-existing bug before building on top of the auth model**: the `Role` type
+in `packages/shared-types` used `"front-desk"` (hyphen) while the Prisma `Role` enum
+uses `front_desk` (underscore). Nothing exercised the mismatch yet (the dev session
+provider builds the actor client-side, it never round-trips through `StaffUser.role`),
+but the new Blueprint/onboarding endpoints planned for the rest of Phase 1 are
+owner-gated and will read roles from the DB, so this would have surfaced as a silent
+`requireOwner`/`requireStaff` failure. Aligned `shared-types`, `packages/auth`, and the
+one hardcoded dev-login value (`apps/admin-kiosk/src/app/login/page.tsx`) on
+`front_desk` to match the DB enum, which is the source of truth.
+
+**Implemented and verified** (Phase 1 — "Public-holiday auto-blocking added to
+calendar/scheduling logic (by region)"):
+- `HolidayProvider` interface (`apps/api/src/modules/holiday/holidayProvider.ts`) — same
+  swappable-seam pattern as `CalendarAdapter`/`KeyProvider`.
+- `NagerDateHolidayProvider` — the real, production default. Unlike Google Calendar,
+  [Nager.Date](https://date.nager.at) is a free, keyless public-holiday API, so no
+  OAuth/credentials gap here; region codes are ISO 3166-1 alpha-2, matching
+  `Business.region` (e.g. `"SG"`) directly. Fails open (logs and returns no holidays)
+  on a fetch error so a third-party outage can never block a real booking; caches
+  results per region+year for the process lifetime.
+- `StaticHolidayProvider` — in-memory table for tests/offline dev.
+- `toLocalDateString()` — resolves a booking's local calendar date using
+  `Business.timezone` via `Intl.DateTimeFormat`, not naive UTC slicing. Covered by a
+  test that specifically picks a UTC timestamp that crosses midnight SGT
+  (`2025-12-31T16:30:00Z` = `2026-01-01` in `Asia/Singapore`) to prove the timezone
+  handling is real, not accidental.
+- `BookingService.create()` now calls `assertNotOnHoliday()` before writing the booking
+  row or touching the calendar adapter; throws the new `HolidayBlockedError` (mapped to
+  HTTP 409 in `errorHandler.ts`) when the booking's local date matches a holiday for the
+  business's region.
+- New `GET /holidays?businessId&year` route (staff-authenticated, scoped to the actor's
+  own business) so admin-owner (and the upcoming onboarding review step) can display
+  which dates are auto-blocked, not just have bookings silently rejected on them.
+- Unit tests: `apps/api/src/modules/booking/__tests__/bookingService.test.ts` (blocks a
+  holiday date, allows a non-holiday date, resolves the date in local time not UTC)
+  against a hand-rolled fake Prisma client, matching the existing `retentionService`
+  test pattern. `pnpm --filter @gracesoft/api test` — 13/13 passing (3 new). `pnpm
+  typecheck` — 9/9 tasks passing across all packages.
+
+**Deliberately not done in this pass**: no admin-owner UI surfaces the `/holidays`
+endpoint yet (no settings page exists to put it on — out of scope until the onboarding
+wizard/settings work below). No retry/backoff on `NagerDateHolidayProvider` beyond the
+in-process cache — acceptable for a fail-open, non-critical enhancement.
+
+**Next up:** Phase 1's remaining three items (onboarding input step, LLM auto-draft,
+human-in-the-loop review) — these share one new domain (a `Blueprint` + onboarding
+document model, currently nonexistent in the schema) and will be built together as
+"the onboarding wizard."

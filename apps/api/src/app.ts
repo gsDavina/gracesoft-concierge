@@ -10,8 +10,10 @@ import { EnvKeyProvider, type KeyProvider } from "./modules/identity/keyProvider
 import { IdentityService } from "./modules/identity/identityService.js";
 import { InMemoryCalendarAdapter, type CalendarAdapter } from "./modules/booking/calendarAdapter.js";
 import { BookingService } from "./modules/booking/bookingService.js";
+import { NagerDateHolidayProvider, type HolidayProvider } from "./modules/holiday/holidayProvider.js";
 import identityRoutes from "./routes/identity.js";
 import bookingRoutes from "./routes/bookings.js";
+import holidayRoutes from "./routes/holidays.js";
 import healthRoutes from "./routes/health.js";
 
 export interface BuildAppOptions {
@@ -19,6 +21,7 @@ export interface BuildAppOptions {
   sessionProvider?: SessionProvider;
   keyProvider?: KeyProvider;
   calendarAdapter?: CalendarAdapter;
+  holidayProvider?: HolidayProvider;
 }
 
 /**
@@ -36,16 +39,21 @@ export async function buildApp(opts: BuildAppOptions = {}): Promise<FastifyInsta
   const app = Fastify({ logger: true });
   registerErrorHandler(app);
 
+  const holidayProvider =
+    opts.holidayProvider ??
+    new NagerDateHolidayProvider(undefined, (err) => app.log.warn({ err }, "holiday lookup failed"));
+
   await app.register(cors, { origin: env.CORS_ORIGINS, credentials: true });
   await app.register(sensible);
   await app.register(authPlugin, { sessionProvider });
 
   const identityService = new IdentityService(db, keyProvider);
-  const bookingService = new BookingService(db, calendarAdapter);
+  const bookingService = new BookingService(db, calendarAdapter, holidayProvider);
 
   await app.register(healthRoutes);
   await app.register(identityRoutes, { identityService });
   await app.register(bookingRoutes, { bookingService });
+  await app.register(holidayRoutes, { db, holidayProvider });
 
   return app;
 }

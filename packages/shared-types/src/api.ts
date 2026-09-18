@@ -1,4 +1,5 @@
 import type { Booking, BookingChannel, CreateBookingInput } from "./booking.js";
+import type { Holiday } from "./holiday.js";
 
 /** API contract types shared between apps/api and both admin frontends. */
 export interface ApiErrorBody {
@@ -48,4 +49,12 @@ export interface AuditLogEntry {
 }
 export interface AuditLogResponse {
   entries: AuditLogEntry[];
+}
+
+export interface ListHolidaysQuery {
+  businessId: string;
+  year: number;
+}
+export interface ListHolidaysResponse {
+  holidays: Holiday[];
 }

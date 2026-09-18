@@ -1,6 +1,7 @@
 import { ForbiddenError, UnauthenticatedError } from "@gracesoft/auth";
 import type { FastifyError, FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { ZodError } from "zod";
+import { HolidayBlockedError } from "../modules/booking/bookingService.js";
 
 export function registerErrorHandler(app: FastifyInstance): void {
   app.setErrorHandler((error: FastifyError | Error, request: FastifyRequest, reply: FastifyReply) => {
@@ -9,6 +10,9 @@ export function registerErrorHandler(app: FastifyInstance): void {
     }
     if (error instanceof ForbiddenError) {
       return reply.status(403).send({ error: "Forbidden", message: error.message });
+    }
+    if (error instanceof HolidayBlockedError) {
+      return reply.status(409).send({ error: "HolidayBlocked", message: error.message });
     }
     if (error instanceof ZodError) {
       return reply
