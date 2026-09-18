@@ -30,6 +30,11 @@ Rationale:
                        - Today's live check-in queue only
                        - One-tap registration confirmation
                        - Deliberately minimal, kiosk-mode UI
+  /demo             → public trust-surface demo (Phase 3, 01-milestones.md)
+                       - Interactive "book a slot -> see the tokenized calendar
+                         event" walkthrough for cold outreach
+                       - Entirely client-side/illustrative — no auth, no calls
+                         to apps/api, nothing persisted
 
 /packages
   /db               → Prisma (or Drizzle) schema, migrations, DB client
@@ -39,7 +44,7 @@ Rationale:
                        - NO business logic, NO PII-handling logic
   /auth             → shared auth config/helpers
                        - Clerk or Auth.js setup
-                       - role definitions (owner, front-desk)
+                       - role definitions (owner, front_desk)
   /config           → shared eslint / tsconfig / prettier base configs
 ```
 
@@ -56,8 +61,8 @@ Chosen specifically because it enables `packages/shared-types` to be imported di
 ## Deployment
 
 - **Platform:** Railway (consolidates with existing Laravel Cloud / Railway usage — avoids spreading across a third platform like AWS or Fly.io purely for this project).
-- Railway supports monorepos natively: each service (`api`, `admin-owner`, `admin-kiosk`) points at the same repo but a different root directory/build path.
-- Result: one repo, one Railway project, three independently deployed and independently scaled services — matching the "separate apps, shared backend" architecture.
+- Railway supports monorepos natively: each service (`api`, `admin-owner`, `admin-kiosk`, `demo`) points at the same repo but a different root directory/build path.
+- Result: one repo, one Railway project, four independently deployed and independently scaled services — matching the "separate apps, shared backend" architecture. `demo` is the one public, unauthenticated service among them — it should not sit behind Cloudflare Access the way the two admin frontends do.
 - Prefer a Singapore-region deployment if available, for latency and in-region data handling.
 
 ## Supporting Infrastructure (Referenced, Not Part of the Repo)

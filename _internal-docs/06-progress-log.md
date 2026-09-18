@@ -339,3 +339,51 @@ rather than inventing an unused module to make the checkbox green.
 
 Phase 2 is 3/4 checked off in [01-milestones.md](./01-milestones.md) — the remaining
 item is blocked on work outside this session's scope, not skipped.
+
+## 2026-09-18 — Phase 3 (Trust Surface + Pricing): new `apps/demo` app
+
+**New service**: `apps/demo` (Next.js, port 3003) — the first genuinely public,
+unauthenticated frontend in this repo. Added to `pnpm-workspace.yaml` (via the existing
+`apps/*` glob, no change needed), `.claude/launch.json`, and
+`03-project-structure.md`'s directory layout / deployment section (now four Railway
+services, not three; noted that `demo` deliberately should *not* sit behind Cloudflare
+Access the way the two admin frontends do).
+
+**Interactive demo** (`/`): implements "book a slot -> show the resulting calendar event
+with token instead of name" literally — a visitor fills in a demo booking (name, phone,
+service, time) as if messaging the bot, then sees a side-by-side reveal: "what you told
+us" vs. "what's written to the calendar," the latter rendered as the actual JSON shape
+of `CalendarEventInput` (mirrored locally rather than imported from `apps/api`, since
+frontends only import from `packages/`, never from another app). A "Simulate a staff
+lookup" button appends a row to a small audit-log table, making the "every lookup is
+logged" claim from 05-privacy-spec.md tangible rather than just asserted. Entirely
+client-side — no network calls, nothing persisted, safe to point cold-outreach traffic
+at without touching production data.
+
+**Pricing page** (`/pricing`): itemized flat-fee + Meta-pass-through-cost structure. The
+user was asked how to handle the actual numbers and chose "placeholder numbers, clearly
+marked TBD" over guessing real figures or skipping the page. All figures live in one
+config file
+(`apps/demo/src/lib/pricingConfig.ts`), so filling in real numbers later never requires
+touching the page component. The page renders a visible "Draft — not for external use"
+banner whenever any figure is still a placeholder, and the Meta rate field intentionally
+has no hardcoded dollar amount (only a pointer to Meta's own pricing calculator) since
+WhatsApp Business Platform per-conversation rates vary by country/category and change
+over time — a wrong guess here would be actively misleading in a way "TBD" is not.
+
+**Bug found and fixed during verification**: the "what you told us" / "what's written to
+the calendar" comparison used an inline two-column CSS grid with no responsive
+breakpoint, which overflowed horizontally on a 375px mobile viewport (checked because a
+cold-outreach demo link is realistically opened on a phone at least as often as a
+desktop). Fixed by moving that layout into a `.comparison-grid` class in `globals.css`
+with a `max-width: 640px` media query that collapses to one column; verified both
+desktop and mobile (375×812) renders after the fix.
+
+**Verified**: `pnpm typecheck` 10/10 across all 8 packages (`@gracesoft/demo` is new).
+Real browser: submitted a demo booking, confirmed the token-only calendar JSON renders
+correctly, triggered the simulated audit-log entry, checked both pages at desktop and
+mobile width, and confirmed no console errors on either page.
+
+Phase 3 is fully checked off in [01-milestones.md](./01-milestones.md), with the caveat
+that the pricing page's numbers are placeholders — **not send-to-a-real-prospect ready
+until someone fills in `apps/demo/src/lib/pricingConfig.ts` with actual figures.**

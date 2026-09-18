@@ -32,8 +32,8 @@ Removes manual setup as the growth bottleneck.
 
 ## Phase 3 — Trust Surface + Pricing (1–2 weeks, can overlap with Phase 2)
 
-- [ ] Interactive demo: book a slot → show the resulting calendar event with token instead of name
-- [ ] Pricing page: flat platform fee + itemized estimated Meta pass-through cost
+- [x] Interactive demo: book a slot → show the resulting calendar event with token instead of name — see [06-progress-log.md](./06-progress-log.md)
+- [x] Pricing page: flat platform fee + itemized estimated Meta pass-through cost — structure built, real numbers still TBD
 - **Deliverable:** demo and pricing page ready for cold outreach
 
 ## Phase 4 — Telegram Expansion (after Phases 1–3 are stable)

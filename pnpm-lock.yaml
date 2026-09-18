@@ -150,6 +150,43 @@ importers:
         specifier: ^2.1.2
         version: 2.1.9(@types/node@22.20.2)(supports-color@7.2.0)
 
+  apps/demo:
+    dependencies:
+      '@gracesoft/shared-types':
+        specifier: workspace:*
+        version: link:../../packages/shared-types
+      next:
+        specifier: ^14.2.15
+        version: 14.2.35(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      react:
+        specifier: ^18.3.1
+        version: 18.3.1
+      react-dom:
+        specifier: ^18.3.1
+        version: 18.3.1(react@18.3.1)
+    devDependencies:
+      '@gracesoft/config':
+        specifier: workspace:*
+        version: link:../../packages/config
+      '@types/node':
+        specifier: ^22.7.4
+        version: 22.20.2
+      '@types/react':
+        specifier: ^18.3.11
+        version: 18.3.31
+      '@types/react-dom':
+        specifier: ^18.3.0
+        version: 18.3.7(@types/react@18.3.31)
+      eslint:
+        specifier: ^8.57.1
+        version: 8.57.1(supports-color@7.2.0)
+      eslint-config-next:
+        specifier: ^14.2.15
+        version: 14.2.35(eslint@8.57.1(supports-color@7.2.0))(supports-color@7.2.0)(typescript@5.9.3)
+      typescript:
+        specifier: ^5.6.3
+        version: 5.9.3
+
   packages/auth:
     dependencies:
       '@gracesoft/shared-types':
