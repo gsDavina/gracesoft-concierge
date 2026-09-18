@@ -40,19 +40,31 @@ Removes manual setup as the growth bottleneck.
 
 - [ ] Telegram channel adapter reusing the same wizard, privacy layer, and vertical package
 - **Rationale:** low-competition wedge, upside rather than urgent
+- **Blocked** (2026-09-18): "reusing the same wizard, privacy layer, and vertical
+  package" assumes a working booking bot already exists for the *primary* channel
+  (WhatsApp) that Telegram just adds a second surface to. That bot — the actual
+  conversational booking flow a patient would message — doesn't exist anywhere in this
+  codebase yet: no webhook routes, no conversation/session state, no slot-availability
+  concept (`BookingService.create` takes an exact ISO time, there's no "list open
+  times" capability for a chat flow to offer). Everything built through Phases 0–3 is
+  real, working supporting infrastructure (privacy layer, onboarding wizard, admin
+  tools, trust/demo surface) *around* that bot, not the bot itself. Building a Telegram
+  adapter with nothing real for it to adapt *to* would be a hollow stub — see
+  [06-progress-log.md](./06-progress-log.md) for the full writeup and the question put
+  to the user about whether to scope and build the base conversational bot next.
 
 ---
 
 ## Pilot Track — GP Clinic (runs alongside the phases above)
 
-- [ ] Learn the clinic's actual workflow (volume, after-hours gaps, staff time spent on registration)
-- [ ] Quantify the pain (estimated staff-hours/week lost to manual registration)
-- [ ] Confirm what calendar/practice-management system the clinic actually uses
-- [ ] Send a low-pressure introductory note (not pitched during a clinical visit)
+- [ ] Learn the clinic's actual workflow (volume, after-hours gaps, staff time spent on registration) — **not implementable by an engineering agent**; requires a real conversation with a real clinic.
+- [ ] Quantify the pain (estimated staff-hours/week lost to manual registration) — same; needs real clinic input.
+- [ ] Confirm what calendar/practice-management system the clinic actually uses — same; needs real clinic input.
+- [ ] Send a low-pressure introductory note (not pitched during a clinical visit) — same; this is an outreach action for the founder, not code.
 - [x] Scope and build the **check-in module** (token reused as arrival credential — see Phase 0/1 dependencies) — see [06-progress-log.md](./06-progress-log.md)
-- [ ] Run a free, parallel (non-disruptive) pilot
-- [ ] Capture before/after metrics (staff time, wait time, after-hours coverage) for a case study
-- [ ] Turn the pilot into a referenceable case study for outreach to the next 20–30 clinics
+- [ ] Run a free, parallel (non-disruptive) pilot — needs a real clinic relationship; also needs the base conversational bot (see Phase 4 blocker above) to actually be pilotable.
+- [ ] Capture before/after metrics (staff time, wait time, after-hours coverage) for a case study — needs real pilot data.
+- [ ] Turn the pilot into a referenceable case study for outreach to the next 20–30 clinics — needs real pilot data.
 
 ---
 

@@ -40,19 +40,20 @@ Removes manual setup as the growth bottleneck.
 
 - [ ] Telegram channel adapter reusing the same wizard, privacy layer, and vertical package
 - **Rationale:** low-competition wedge, upside rather than urgent
+- **Blocked** — no base conversational booking bot exists for any channel yet; see 01-milestones.md and 06-progress-log.md.
 
 ---
 
 ## Pilot Track — GP Clinic (runs alongside the phases above)
 
-- [ ] Learn the clinic's actual workflow (volume, after-hours gaps, staff time spent on registration)
-- [ ] Quantify the pain (estimated staff-hours/week lost to manual registration)
-- [ ] Confirm what calendar/practice-management system the clinic actually uses
-- [ ] Send a low-pressure introductory note (not pitched during a clinical visit)
+- [ ] Learn the clinic's actual workflow — not implementable by an engineering agent, needs a real clinic conversation
+- [ ] Quantify the pain — same
+- [ ] Confirm what calendar/practice-management system the clinic actually uses — same
+- [ ] Send a low-pressure introductory note — same, an outreach action, not code
 - [x] Scope and build the **check-in module** (token reused as arrival credential — see Phase 0/1 dependencies) — see [06-progress-log.md](./06-progress-log.md)
-- [ ] Run a free, parallel (non-disruptive) pilot
-- [ ] Capture before/after metrics (staff time, wait time, after-hours coverage) for a case study
-- [ ] Turn the pilot into a referenceable case study for outreach to the next 20–30 clinics
+- [ ] Run a free, parallel (non-disruptive) pilot — needs a real clinic + the base conversational bot
+- [ ] Capture before/after metrics for a case study — needs real pilot data
+- [ ] Turn the pilot into a referenceable case study — needs real pilot data
 
 ---
 

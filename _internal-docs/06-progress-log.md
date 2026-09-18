@@ -387,3 +387,70 @@ mobile width, and confirmed no console errors on either page.
 Phase 3 is fully checked off in [01-milestones.md](./01-milestones.md), with the caveat
 that the pricing page's numbers are placeholders — **not send-to-a-real-prospect ready
 until someone fills in `apps/demo/src/lib/pricingConfig.ts` with actual figures.**
+
+## 2026-09-18 — Assessment: Phase 4 and most of the Pilot Track are blocked
+
+Before starting Phase 4 (Telegram Expansion), I checked what it would actually be
+extending. Grepped the whole `apps/api/src` tree for anything webhook/conversation/
+channel-related: nothing. No WhatsApp or Telegram webhook route, no conversation/session
+state of any kind, and no slot-availability concept at all —
+`BookingService.create()` (apps/api/src/modules/booking/bookingService.ts) takes an
+exact ISO `startsAt`/`endsAt`, there is no "list the open times for this service" query
+anywhere for a chat flow (or anything else) to offer a booker.
+
+**What this means**: the actual booking bot — the WhatsApp/Telegram conversational
+surface a patient would message to book an appointment, which is what "Concierge" as a
+product is nominally about — has not been built. Everything implemented across Phases
+0–3 (the privacy layer, the onboarding wizard, both admin frontends, the trust-surface
+demo) is real, working, and correctly wired to each other, but it's all *supporting*
+infrastructure that assumes a conversational front door exists. It doesn't yet.
+
+This wasn't skipped or missed — no milestone checklist item in Phase 0 or Phase 1 asked
+for it (Phase 1's four items are all about the onboarding *wizard*, not the bot itself;
+03-project-structure.md lists "WhatsApp webhook" and "Telegram webhook" as things
+`apps/api` is *responsible for* eventually, not as a Phase 0/1 deliverable). Phase 4's
+premise ("Telegram channel adapter reusing the same wizard, privacy layer, and vertical
+package") is written as if a WhatsApp bot is already live and Telegram is just a second
+surface on top of it — that premise doesn't hold yet.
+
+**Why I stopped instead of building a Telegram adapter anyway**: a channel adapter with
+no real conversation logic and no availability system behind it would be a hollow stub —
+it would technically produce a file named "Telegram adapter" without doing anything a
+prospect or pilot clinic could use, which is exactly the kind of half-finished,
+unrequested-scope work I should avoid rather than manufacture to turn a checkbox green.
+Building the *real* thing (a working conversational booking bot, for at least one
+channel) is a substantial, multi-part undertaking of its own — roughly comparable in
+size to everything built so far combined — and touches decisions that aren't mine to
+make unilaterally:
+
+- **Channel choice for the first real integration**: Telegram is the easier one to
+  actually stand up and test end-to-end (a bot token from @BotFather requires no
+  business verification, unlike Meta's WhatsApp Cloud API, which needs a Meta Business
+  account and app review — the same kind of credentials gap already blocking
+  `GoogleCalendarAdapter`). Building Telegram first, even though WhatsApp is nominally
+  "primary" elsewhere in the docs, might be the pragmatic move — but that's a real
+  product-sequencing call.
+- **A slot-availability system** would need to be designed and built first (or as part
+  of the same effort) — there's currently no way for a chat flow to say "here are the
+  open 15-minute slots for General Consultation this week," only a raw
+  "create a booking at this exact time" primitive.
+- **Conversation/session state** design (how much of the flow is button-driven vs.
+  free text, how state persists between messages) is itself a real design decision, not
+  a mechanical extension of existing code.
+
+**Also affects Phase 2's remaining item** ("Booking flow copy adjusted for healthcare
+context") from the 2026-09-18 Phase 2 entry above — same root cause, now confirmed with
+a full-repo grep rather than a spot check.
+
+**Also affects most of the Pilot Track** — several of its remaining items (learning the
+clinic's workflow, sending an introductory note, running a pilot, capturing metrics) are
+outreach/relationship actions for the founder, not engineering tasks an agent can
+perform regardless of what's built. But "run a free, parallel pilot" specifically also
+now has a technical blocker: there's nothing pilotable yet without the base
+conversational bot.
+
+**I'm asking the user, rather than deciding, whether to scope and build a real
+conversational booking bot next** (and if so, for which channel first) — this is a
+large enough chunk of new work, with real product-sequencing implications, that it
+deserves an explicit decision rather than an autonomous one. See the message sent
+alongside this commit.
