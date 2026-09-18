@@ -15,9 +15,9 @@ Foundational; goes first even though it's less visible than the wizard.
 ## Phase 1 — Onboarding Wizard (3–5 weeks)
 Removes manual setup as the growth bottleneck.
 
-- [ ] Input step: business submits website URL and/or uploads docs (services, hours, FAQs)
-- [ ] Auto-draft: LLM extracts blueprint content from submitted material
-- [ ] Human-in-the-loop review/edit step before go-live
+- [x] Input step: business submits website URL and/or uploads docs (services, hours, FAQs) — see [06-progress-log.md](./06-progress-log.md)
+- [x] Auto-draft: LLM extracts blueprint content from submitted material — see [06-progress-log.md](./06-progress-log.md)
+- [x] Human-in-the-loop review/edit step before go-live — see [06-progress-log.md](./06-progress-log.md)
 - [x] Public-holiday auto-blocking added to calendar/scheduling logic (by region) — see [06-progress-log.md](./06-progress-log.md)
 - **Target:** signup → working bot in under 20 minutes, trending toward under 10
 - **Deliverable:** self-serve onboarding flow, no manual blueprint authoring required

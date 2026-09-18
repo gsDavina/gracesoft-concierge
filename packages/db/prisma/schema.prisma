@@ -39,6 +39,22 @@ enum BookingChannel {
   admin
 }
 
+enum OnboardingSourceType {
+  url
+  document
+}
+
+enum OnboardingSourceStatus {
+  pending
+  processed
+  failed
+}
+
+enum BlueprintStatus {
+  draft
+  published
+}
+
 model Business {
   id              String   @id @default(cuid())
   name            String
@@ -52,11 +68,13 @@ model Business {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
-  staffUsers      StaffUser[]
-  identities      Identity[]
-  bookings        Booking[]
-  auditEntries    TokenLookupAudit[]
-  retentionPolicy RetentionPolicy?
+  staffUsers        StaffUser[]
+  identities        Identity[]
+  bookings          Booking[]
+  auditEntries      TokenLookupAudit[]
+  retentionPolicy   RetentionPolicy?
+  onboardingSources OnboardingSource[]
+  blueprint         Blueprint?
 
   @@map("businesses")
 }
@@ -169,4 +187,60 @@ model RetentionPolicy {
   updatedAt                DateTime @updatedAt
 
   @@map("retention_policies")
+}
+
+/// Phase 1 onboarding wizard, input step: a business-submitted website URL or uploaded
+/// document (services/hours/FAQs). `extractedText` is the plain text pulled from that
+/// source — the only thing the LLM auto-draft step (below) ever reads; the raw upload
+/// itself is not retained once extraction succeeds.
+model OnboardingSource {
+  id         String   @id @default(cuid())
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  type OnboardingSourceType
+
+  /// Set when type = url.
+  url String?
+
+  /// Set when type = document.
+  fileName String?
+  mimeType String?
+
+  extractedText String?
+  status        OnboardingSourceStatus @default(pending)
+  errorMessage  String?
+
+  createdAt DateTime @default(now())
+
+  @@index([businessId])
+  @@map("onboarding_sources")
+}
+
+/// Phase 1 onboarding wizard, auto-draft + human-in-the-loop review: one blueprint per
+/// business, either an LLM-generated (or owner-edited) draft or the published, go-live
+/// version an owner has reviewed and approved. `services`/`hours`/`faqs` shapes are
+/// defined in packages/shared-types (BlueprintService/BlueprintHours/BlueprintFaq) — kept
+/// as Json here since Prisma has no first-class array-of-object column type.
+model Blueprint {
+  businessId String   @id
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  status BlueprintStatus @default(draft)
+
+  services Json @default("[]")
+  hours    Json @default("[]")
+  faqs     Json @default("[]")
+
+  /// True if the current draft content came from the LLM extraction step and has not
+  /// since been hand-edited by an owner.
+  generatedByLlm Boolean @default(false)
+
+  publishedAt         DateTime?
+  publishedByStaffId  String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("blueprints")
 }

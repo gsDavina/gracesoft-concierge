@@ -26,6 +26,12 @@ const envSchema = z.object({
 
   // Telegram Bot API (Phase 4).
   TELEGRAM_WEBHOOK_SECRET: z.string().optional(),
+
+  // Phase 1 onboarding wizard auto-draft step. Without this, the app falls back to
+  // HeuristicLlmProvider (modules/onboarding/llmProvider.ts) — a real but low-quality
+  // keyword-based extractor, so onboarding is still usable end-to-end in dev without an
+  // API key, just not with LLM-quality drafts.
+  ANTHROPIC_API_KEY: z.string().optional(),
 });
 
 export type Env = z.infer<typeof envSchema>;

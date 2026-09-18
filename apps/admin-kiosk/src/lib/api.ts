@@ -22,7 +22,9 @@ async function request<T>(path: string, actor: AuthenticatedActor, init?: Reques
   const res = await fetch(`${API_URL}${path}`, {
     ...init,
     headers: {
-      "Content-Type": "application/json",
+      // Fastify's JSON body parser rejects an empty body sent with this header, so only
+      // set it when there's actually a body to parse.
+      ...(init?.body ? { "Content-Type": "application/json" } : {}),
       Authorization: `Bearer ${getBearerToken(actor)}`,
       ...init?.headers,
     },

@@ -171,3 +171,118 @@ in-process cache — acceptable for a fail-open, non-critical enhancement.
 human-in-the-loop review) — these share one new domain (a `Blueprint` + onboarding
 document model, currently nonexistent in the schema) and will be built together as
 "the onboarding wizard."
+
+## 2026-09-18 — Onboarding wizard: input step, LLM auto-draft, human review/publish
+
+Closes out the rest of Phase 1. All three remaining items share one new domain and were
+built together.
+
+**Schema** (`packages/db/prisma/schema.prisma`, migration `20260918050005_onboarding_wizard`,
+generated and applied against a real local Postgres):
+- `OnboardingSource` — one row per submitted URL or uploaded document; holds the
+  extracted plain text actually fed to the LLM step (`extractedText`) plus a
+  `pending`/`processed`/`failed` status and error message. The raw upload itself is never
+  persisted, only the extracted text.
+- `Blueprint` — one per business, `draft`/`published` status, `services`/`hours`/`faqs`
+  as JSON (shapes defined in `packages/shared-types/src/blueprint.ts`), `generatedByLlm`
+  flag, `publishedAt`/`publishedByStaffId`.
+
+**Input step** (`apps/api/src/modules/onboarding/textExtraction.ts`):
+- `extractTextFromUrl` — fetches a URL and strips it to visible text with a small
+  regex-based HTML stripper (script/style/comment removal, tag stripping, entity
+  decoding) rather than adding a cheerio/jsdom dependency for this.
+- `extractTextFromDocument` — supports `text/plain` and `text/markdown` uploads only;
+  anything else (PDF, Word) throws `UnsupportedDocumentFormatError` with a message
+  naming what would be needed (pdf-parse/mammoth) rather than silently mishandling it —
+  same "honest stub" pattern as `GoogleCalendarAdapter`.
+- Both extraction paths are wrapped so failures land in `OnboardingSource.status =
+  "failed"` with the error message, not a thrown request error — submitting a source
+  that fails to parse is a normal, visible outcome, not a 500.
+- New routes: `POST /businesses/:businessId/onboarding/sources/{url,document}` (the
+  latter via `@fastify/multipart` — pinned to `^8.3.0`, since the installed default
+  major requires Fastify 5 and this app is on Fastify 4), `GET .../onboarding/sources`.
+
+**Auto-draft step** (`apps/api/src/modules/onboarding/llmProvider.ts`):
+- `LlmProvider` interface — same swappable-seam pattern as `CalendarAdapter`/
+  `HolidayProvider`.
+- `AnthropicLlmProvider` — real implementation using `@anthropic-ai/sdk`
+  (`claude-sonnet-5`), a strict JSON-only system prompt, and zod validation of the
+  response shape; throws `LlmExtractionError` (mapped to HTTP 502) if the model output
+  doesn't parse or match. Needs `ANTHROPIC_API_KEY` (added to `apps/api/.env.example` and
+  `lib/env.ts`).
+- `HeuristicLlmProvider` — the dev/no-key fallback. Not a mock: a real (if crude)
+  keyword-based extractor (weekday + time-range lines -> hours, "?"-line + next line ->
+  FAQ, recognizable listing lines -> services), so onboarding is fully usable end-to-end
+  without any API key, just with lower-quality drafts. `buildApp()` picks
+  `AnthropicLlmProvider` when `ANTHROPIC_API_KEY` is set, else `HeuristicLlmProvider`
+  with a logged warning — same fallback pattern as the encryption-key/session-provider
+  seams.
+- `POST /businesses/:businessId/onboarding/draft` — gathers every `processed` source's
+  extracted text for the business, calls the LLM provider, upserts the `Blueprint` as a
+  fresh draft (`generatedByLlm: true`, clears any prior publish state). Throws
+  `NoSourcesError` (400) if there's nothing processed yet.
+
+**Human-in-the-loop review/edit + publish** (`OnboardingService` in
+`onboardingService.ts`):
+- `GET/PATCH /businesses/:businessId/blueprint` — owner reads/edits the draft content
+  directly; a `PATCH` always sets `generatedByLlm: false` and clears publish state, so
+  "this was LLM output, not yet reviewed" vs. "an owner has touched this" is always
+  reconstructable from the row.
+- `POST /businesses/:businessId/blueprint/publish` — go-live; records which staff member
+  published and when.
+- Every route in `routes/onboarding.ts` is owner-gated (`requireOwner`), matching the
+  existing doc comment on `requireOwner` in `packages/auth` ("blueprint editing" was
+  already named as an owner-only action before this work started).
+- `apps/admin-owner`: new `/blueprint` page — URL/file submission form, a sources table
+  with live status, a "Generate draft from sources" button, and an editable
+  services/hours/FAQs form with Save/Publish actions. Added to `NavBar`.
+
+**Bugs found and fixed during this work** (all pre-existing, surfaced by testing against
+a real Postgres + real browser rather than just typechecking):
+1. `packages/shared-types`' `Role` used `"front-desk"` (hyphen) while the Prisma enum
+   uses `front_desk` (underscore) — see the 2026-09-18 Phase 1 kickoff entry above; fixed
+   before this work started since the new owner-gated routes depend on role checks.
+2. The admin-owner and admin-kiosk `lib/api.ts` `request()` helpers always sent
+   `Content-Type: application/json`, even for body-less `POST`s (`generate draft`,
+   `publish`) — Fastify's JSON body parser rejects an empty body sent with that header,
+   so both no-argument POST actions 400'd. Fixed by only setting the header when
+   `init.body` is present.
+3. `apps/admin-owner/src/app/NavBar.tsx` read `localStorage` directly during render
+   (`typeof window !== "undefined" ? loadDevSession() : null`), which always diverges
+   from the server-rendered HTML (no `window` server-side) and threw a React hydration
+   error on *every* page load, not just the new one — moved the read into a `useEffect`
+   (same fix shape as the existing `useRequireSession` hook).
+
+**Verified end-to-end**, not just typechecked:
+- `pnpm typecheck` — 9/9 tasks. `pnpm --filter @gracesoft/api test` — 30/30 (11 new:
+  `textExtraction.test.ts`, `llmProvider.test.ts` for `HeuristicLlmProvider`,
+  `onboardingService.test.ts` against a hand-rolled fake Prisma client).
+- Real local Postgres: applied the new migration, ran `apps/api` for real, seeded a
+  business + owner (`apps/api/scripts/seed-dev.mjs`, new — kept as a committed dev
+  convenience), and drove the full flow over HTTP with curl: uploaded a `.txt` doc,
+  confirmed it was extracted and `processed`, generated a draft (via
+  `HeuristicLlmProvider`, since no `ANTHROPIC_API_KEY` is configured in this
+  environment), edited it, published it, then separately confirmed the holiday-blocking
+  booking rejection from the previous entry still works against **live** Nager.Date data
+  (not just the static test fixture) — `GET .../holidays?year=2026` for `region: "SG"`
+  correctly returned 11 real 2026 Singapore public holidays, and a booking request on
+  `2026-01-01` was rejected 409 while one on `2026-09-21` succeeded.
+- Real browser (admin-owner dev server): signed in as the dev owner, navigated to
+  `/blueprint`, submitted a URL source, generated a draft, hand-added a service, saved,
+  and published — all through actual clicks/typing, not API calls. Caught bug #2 this
+  way (draft generation 400'd) and bug #3 (hydration error, visible on every page, not
+  just this one) by checking the browser console rather than only the visible UI.
+
+**Deliberately not done in this pass**: no PDF/Word document parsing (flagged, not
+faked — `UnsupportedDocumentFormatError` names what's missing). No public-holiday
+display baked into the blueprint review UI yet (the `/holidays` endpoint exists but
+nothing links to it from `/blueprint` — small follow-up, not go-live-blocking). No retry
+UI for a failed source (the API supports resubmitting, the UI just doesn't have a
+dedicated "retry" button — you can resubmit the same URL/file).
+
+**Phase 1 is now fully checked off** in [01-milestones.md](./01-milestones.md). Next
+up: Phase 2 (Healthcare Vertical Package) and Phase 3 (Trust Surface + Pricing) are
+largely content/product decisions (a clinic FAQ template, DPA template, stated
+compliance posture, pricing numbers) rather than pure engineering — flagging that before
+starting, since several of those items need a business decision (what to charge, what
+compliance claims to actually stand behind) that isn't mine to make unilaterally.
