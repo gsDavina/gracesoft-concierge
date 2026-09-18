@@ -1,15 +1,32 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
+import { Montserrat, Source_Code_Pro } from "next/font/google";
 import "./globals.css";
 
+const montserrat = Montserrat({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800"],
+  style: ["normal", "italic"],
+  variable: "--font-montserrat",
+  display: "swap",
+});
+
+const sourceCodePro = Source_Code_Pro({
+  subsets: ["latin"],
+  weight: ["400", "600"],
+  variable: "--font-source-code-pro",
+  display: "swap",
+});
+
 export const metadata: Metadata = {
-  title: "Concierge — Check-in Kiosk",
+  title: "GraceSoft Foyer — Check-in Kiosk",
   description: "Front-desk check-in queue.",
+  icons: { icon: "/favicon.svg" },
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" className={`${montserrat.variable} ${sourceCodePro.variable}`}>
       <body>{children}</body>
     </html>
   );

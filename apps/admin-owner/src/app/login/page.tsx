@@ -3,6 +3,8 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { saveDevSession } from "@/lib/session";
+import { Wordmark } from "@/brand/Wordmark";
+import { BRAND } from "@/brand/config";
 
 /**
  * DEV ONLY sign-in. Stands in for a real Clerk/Auth.js login screen (03-project-structure.md)
@@ -22,6 +24,9 @@ export default function LoginPage() {
 
   return (
     <main style={{ maxWidth: 480, margin: "10vh auto", padding: "0 24px" }}>
+      <div style={{ display: "flex", justifyContent: "center", marginBottom: 32 }}>
+        <Wordmark product={BRAND.productName} width={180} />
+      </div>
       <h1 style={{ fontSize: 28 }}>Owner sign-in (dev)</h1>
       <p style={{ color: "var(--muted)" }}>
         Placeholder for real staff auth. Enter the business and staff ids to seed an owner
@@ -58,7 +63,7 @@ const inputStyle: React.CSSProperties = {
 const buttonStyle: React.CSSProperties = {
   padding: "12px 20px",
   fontSize: 16,
-  background: "var(--accent)",
+  background: "var(--accent-solid)",
   color: "var(--accent-contrast)",
   border: "none",
   borderRadius: 8,

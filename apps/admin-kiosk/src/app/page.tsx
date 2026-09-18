@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { ApiError, checkIn, fetchTodaysQueue } from "@/lib/api";
 import { clearDevSession, loadDevSession } from "@/lib/session";
+import { Mark } from "@/brand/Mark";
+import { BRAND } from "@/brand/config";
 
 const POLL_INTERVAL_MS = 15_000;
 
@@ -66,6 +68,13 @@ export default function QueuePage() {
 
   return (
     <main style={{ padding: 24, maxWidth: 900, margin: "0 auto" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20 }}>
+        <Mark initials={BRAND.initials} size={34} />
+        <span style={{ fontFamily: "var(--font-montserrat)", fontStyle: "italic", fontSize: 16 }}>
+          <span style={{ fontWeight: 800, color: "var(--gs-wordmark-grace)" }}>Grace</span>
+          <span style={{ fontWeight: 600 }}>Soft</span> {BRAND.productName}
+        </span>
+      </div>
       <h1 style={{ fontSize: 32, marginBottom: 4 }}>Today&apos;s check-in queue</h1>
       <p style={{ color: "var(--muted)", marginTop: 0 }}>
         {new Date().toLocaleDateString(undefined, {
@@ -143,7 +152,7 @@ const checkInButtonStyle: React.CSSProperties = {
   padding: "18px 28px",
   fontSize: 20,
   fontWeight: 700,
-  background: "var(--accent)",
+  background: "var(--accent-solid)",
   color: "var(--accent-contrast)",
   border: "none",
   borderRadius: 10,

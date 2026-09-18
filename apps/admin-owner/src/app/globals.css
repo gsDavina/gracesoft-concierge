@@ -1,13 +1,42 @@
+/*
+ * Brand palette from _internal-docs/09-branding-guidelines.md. Light mode maps the
+ * same Purple/Black scale onto light surfaces; dark mode reuses the guideline's
+ * explicit role table verbatim (it specifies exact shades for WCAG AA, not just "invert").
+ * Atrium's own accent tint (Purple 600) only applies in light mode — dark mode is the
+ * shared, spec-fixed system all three apps use.
+ */
 :root {
   color-scheme: light;
-  --bg: #f5f6f8;
+  --bg: #f5f5f5;
   --surface: #ffffff;
-  --border: #dde1e6;
-  --text: #16181d;
-  --muted: #5b6270;
-  --accent: #1a4d6b;
-  --accent-contrast: #ffffff;
+  --border: #e5e5e5;
+  --text: #1a1a1a;
+  --muted: #666666;
+  --accent: #372aac;
+  --accent-hover: #2e2392;
+  --accent-solid: #372aac;
+  --accent-contrast: #f5f5f5;
   --danger: #b3261e;
+  --gs-wordmark-grace: #372aac;
+  --gs-wordmark-soft: #1a1a1a;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --bg: #000000;
+    --surface: #1a1a1a;
+    --border: #4d4d4d;
+    --text: #f5f5f5;
+    --muted: #b3b3b3;
+    --accent: #a79fe4;
+    --accent-hover: #c9c5ef;
+    --accent-solid: #372aac;
+    --accent-contrast: #f5f5f5;
+    --danger: #ff6b6b;
+    --gs-wordmark-grace: #a79fe4;
+    --gs-wordmark-soft: #f5f5f5;
+  }
 }
 
 * {
@@ -20,12 +49,7 @@ body {
   padding: 0;
   background: var(--bg);
   color: var(--text);
-  font-family:
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    Roboto,
-    sans-serif;
+  font-family: var(--font-montserrat), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
 a {
@@ -47,4 +71,25 @@ td {
   text-align: left;
   padding: 10px 12px;
   border-bottom: 1px solid var(--border);
+}
+
+code,
+pre {
+  font-family: var(--font-source-code-pro), ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+.gs-wordmark-grace {
+  fill: var(--gs-wordmark-grace);
+}
+
+.gs-wordmark-soft {
+  fill: var(--gs-wordmark-soft);
+}
+
+.gs-wordmark-tagline span {
+  font-family: var(--font-montserrat), sans-serif;
+  font-weight: 600;
+  font-style: italic;
+  font-size: 12px;
+  color: var(--gs-wordmark-soft);
 }

@@ -1,8 +1,10 @@
 import Link from "next/link";
 import { estimatedMonthlyMetaCost, PRICING_CONFIG } from "@/lib/pricingConfig";
+import { Wordmark } from "@/brand/Wordmark";
+import { BRAND } from "@/brand/config";
 
 export const metadata = {
-  title: "Concierge — Pricing (draft)",
+  title: "GraceSoft Window — Pricing (draft)",
 };
 
 /**
@@ -37,10 +39,15 @@ export default function PricingPage() {
       )}
 
       <header style={{ textAlign: "center", marginBottom: 40 }}>
+        <div style={{ display: "flex", justifyContent: "center", marginBottom: 24 }}>
+          <Wordmark product={BRAND.productName} width={180} />
+        </div>
         <p style={{ color: "var(--accent)", fontWeight: 600, letterSpacing: 0.5, marginBottom: 8 }}>
-          CONCIERGE — PRICING
+          PRICING
         </p>
-        <h1 style={{ fontSize: 32, margin: "0 0 12px" }}>Simple, itemized pricing</h1>
+        <h1 className="gs-display" style={{ fontSize: 34, fontWeight: 700, margin: "0 0 12px" }}>
+          Simple, itemized pricing
+        </h1>
         <p style={{ color: "var(--muted)", fontSize: 16, maxWidth: 560, margin: "0 auto" }}>
           One flat platform fee. The only variable cost is what Meta charges per WhatsApp
           conversation, passed through at cost — no markup.

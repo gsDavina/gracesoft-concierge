@@ -398,7 +398,7 @@ export default function BlueprintPage() {
             type="button"
             onClick={handlePublish}
             disabled={!!busy || !blueprint}
-            style={{ ...buttonStyle, background: "var(--accent)", color: "var(--accent-contrast)" }}
+            style={{ ...buttonStyle, background: "var(--accent-solid)", color: "var(--accent-contrast)" }}
           >
             Publish (go live)
           </button>

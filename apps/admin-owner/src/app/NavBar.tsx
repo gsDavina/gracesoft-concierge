@@ -5,6 +5,8 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import type { AuthenticatedActor } from "@gracesoft/shared-types";
 import { clearDevSession, loadDevSession } from "@/lib/session";
+import { Mark } from "@/brand/Mark";
+import { BRAND } from "@/brand/config";
 
 const links = [
   { href: "/", label: "Bookings" },
@@ -36,8 +38,14 @@ export function NavBar() {
         background: "var(--surface)",
       }}
     >
-      <div style={{ display: "flex", gap: 20, alignItems: "center" }}>
-        <strong>Concierge</strong>
+      <div style={{ display: "flex", gap: 24, alignItems: "center" }}>
+        <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+          <Mark initials={BRAND.initials} size={30} />
+          <span style={{ fontFamily: "var(--font-montserrat)", fontStyle: "italic", fontSize: 15 }}>
+            <span style={{ fontWeight: 800, color: "var(--gs-wordmark-grace)" }}>Grace</span>
+            <span style={{ fontWeight: 600 }}>Soft</span> {BRAND.productName}
+          </span>
+        </div>
         {links.map((link) => (
           <Link
             key={link.href}

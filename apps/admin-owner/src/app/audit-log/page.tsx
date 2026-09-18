@@ -96,7 +96,7 @@ export default function AuditLogPage() {
             type="submit"
             style={{
               padding: "10px 18px",
-              background: "var(--accent)",
+              background: "var(--accent-solid)",
               color: "var(--accent-contrast)",
               border: "none",
               borderRadius: 8,
