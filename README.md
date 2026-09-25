@@ -58,10 +58,8 @@ pnpm db:generate
 # Seed a dev business + an owner and a front-desk staff user:
 pnpm --filter @gracesoft/api seed:dev
 
-# apps/api reads its config from process.env, not from apps/api/.env directly — nothing
-# in the app loads dotenv yet, so export the same vars from apps/api/.env into this
-# shell before starting it (keep DATABASE_URL from above, add the encryption key):
-export GRACESOFT_DEV_ENCRYPTION_KEYS='{"dev-business-key-1":"REPLACE_WITH_BASE64_32_BYTE_KEY"}'
+# apps/api's scripts load apps/api/.env via Node's --env-file-if-exists (Node >= 22.9);
+# vars already exported in your shell take precedence over the file.
 
 # Run everything (api :3000, admin-owner :3001, admin-kiosk :3002, demo :3003):
 pnpm dev
