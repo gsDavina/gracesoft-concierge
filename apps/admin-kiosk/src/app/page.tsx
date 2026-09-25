@@ -69,10 +69,11 @@ export default function QueuePage() {
   return (
     <main style={{ padding: 24, maxWidth: 900, margin: "0 auto" }}>
       <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20 }}>
-        <Mark initials={BRAND.initials} size={34} />
+        <Mark size={34} />
         <span style={{ fontFamily: "var(--font-montserrat)", fontStyle: "italic", fontSize: 16 }}>
-          <span style={{ fontWeight: 800, color: "var(--gs-wordmark-grace)" }}>Grace</span>
-          <span style={{ fontWeight: 600 }}>Soft</span> {BRAND.productName}
+          <span style={{ fontWeight: 800, color: "var(--gs-brand-grace)" }}>Grace</span>
+          <span style={{ fontWeight: 600 }}>Soft</span> Concierge{" "}
+          <span style={{ color: "var(--gs-brand-product)" }}>{BRAND.productName}</span>
         </span>
       </div>
       <h1 style={{ fontSize: 32, marginBottom: 4 }}>Today&apos;s check-in queue</h1>

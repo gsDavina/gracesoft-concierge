@@ -19,7 +19,7 @@ const sourceCodePro = Source_Code_Pro({
 });
 
 export const metadata: Metadata = {
-  title: "GraceSoft Foyer — Check-in Kiosk",
+  title: "GraceSoft Concierge Kiosk — Check-in",
   description: "Front-desk check-in queue.",
   icons: { icon: "/favicon.svg" },
 };

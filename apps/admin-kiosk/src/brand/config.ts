@@ -1,5 +1,4 @@
 export const BRAND = {
-  productName: "Foyer",
-  initials: "FO",
-  fullName: "GraceSoft Foyer",
+  productName: "Kiosk",
+  fullName: "GraceSoft Concierge Kiosk",
 } as const;

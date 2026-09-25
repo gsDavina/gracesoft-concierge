@@ -20,7 +20,7 @@ const sourceCodePro = Source_Code_Pro({
 });
 
 export const metadata: Metadata = {
-  title: "GraceSoft Atrium — Owner Dashboard",
+  title: "GraceSoft Concierge Admin — Owner Dashboard",
   description: "Bookings, identity audit log, and settings.",
   icons: { icon: "/favicon.svg" },
 };

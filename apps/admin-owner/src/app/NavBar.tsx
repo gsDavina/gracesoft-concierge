@@ -40,10 +40,11 @@ export function NavBar() {
     >
       <div style={{ display: "flex", gap: 24, alignItems: "center" }}>
         <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-          <Mark initials={BRAND.initials} size={30} />
+          <Mark size={30} />
           <span style={{ fontFamily: "var(--font-montserrat)", fontStyle: "italic", fontSize: 15 }}>
-            <span style={{ fontWeight: 800, color: "var(--gs-wordmark-grace)" }}>Grace</span>
-            <span style={{ fontWeight: 600 }}>Soft</span> {BRAND.productName}
+            <span style={{ fontWeight: 800, color: "var(--gs-brand-grace)" }}>Grace</span>
+            <span style={{ fontWeight: 600 }}>Soft</span> Concierge{" "}
+            <span style={{ color: "var(--gs-brand-product)" }}>{BRAND.productName}</span>
           </span>
         </div>
         {links.map((link) => (
