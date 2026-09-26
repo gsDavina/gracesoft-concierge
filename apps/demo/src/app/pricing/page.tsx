@@ -1,10 +1,9 @@
 import Link from "next/link";
 import { estimatedMonthlyMetaCost, PRICING_CONFIG } from "@/lib/pricingConfig";
 import { Wordmark } from "@/brand/Wordmark";
-import { BRAND } from "@/brand/config";
 
 export const metadata = {
-  title: "GraceSoft Window — Pricing (draft)",
+  title: "GraceSoft Concierge Demo — Pricing (draft)",
 };
 
 /**
@@ -40,7 +39,7 @@ export default function PricingPage() {
 
       <header style={{ textAlign: "center", marginBottom: 40 }}>
         <div style={{ display: "flex", justifyContent: "center", marginBottom: 24 }}>
-          <Wordmark product={BRAND.productName} width={180} />
+          <Wordmark width={260} />
         </div>
         <p style={{ color: "var(--accent)", fontWeight: 600, letterSpacing: 0.5, marginBottom: 8 }}>
           PRICING

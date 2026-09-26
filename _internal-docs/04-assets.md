@@ -23,5 +23,6 @@ Same colourways as above (brand colours / `-b` black / `-w` white), with the app
 
 - `wm-a*`, `logo-a*` - Concierge Admin (`apps/admin-owner`). Logo reads CC / AN.
 - `wm-k*`, `logo-k*` - Concierge Kiosk (`apps/admin-kiosk`). Logo reads CC / KO.
+- `wm-d*`, `logo-d*` - Concierge Demo (`apps/demo`). Logo reads CC / DM.
 
 The apps inline these vectors as React components (`src/brand/Wordmark.tsx` and `src/brand/Mark.tsx`). Their fills come from CSS variables, so a single component covers all three colourways and dark mode.

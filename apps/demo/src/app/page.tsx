@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { Wordmark } from "@/brand/Wordmark";
-import { BRAND } from "@/brand/config";
 
 /**
  * Mirrors apps/api/src/modules/booking/calendarAdapter.ts's `CalendarEventInput` — kept
@@ -94,7 +93,7 @@ export default function DemoPage() {
     <main style={{ maxWidth: 920, margin: "0 auto", padding: "48px 24px 96px" }}>
       <header style={{ textAlign: "center", marginBottom: 48 }}>
         <div style={{ display: "flex", justifyContent: "center", marginBottom: 24 }}>
-          <Wordmark product={BRAND.productName} width={200} />
+          <Wordmark width={280} />
         </div>
         <p style={{ color: "var(--accent)", fontWeight: 600, letterSpacing: 0.5, marginBottom: 8 }}>
           PRIVACY BY ARCHITECTURE

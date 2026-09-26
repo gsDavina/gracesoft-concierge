@@ -26,7 +26,7 @@ const sourceCodePro = Source_Code_Pro({
 });
 
 export const metadata: Metadata = {
-  title: "GraceSoft Window — Privacy-first booking, in 30 seconds",
+  title: "GraceSoft Concierge Demo — Privacy-first booking, in 30 seconds",
   description:
     "See exactly what a booking bot needs to know versus what ends up on a shared calendar.",
   icons: { icon: "/favicon.svg" },

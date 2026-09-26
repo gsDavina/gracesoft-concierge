@@ -2,7 +2,7 @@
  * Brand palette from _internal-docs/09-branding-guidelines.md. Light mode maps the
  * same Purple/Black scale onto light surfaces; dark mode reuses the guideline's
  * explicit role table verbatim (it specifies exact shades for WCAG AA, not just "invert").
- * Window's own accent tint (Purple 400, the lightest/most approachable shade — this is
+ * Demo's own accent tint (Purple 400, the lightest/most approachable shade — this is
  * the public marketing surface) only applies in light mode — dark mode is the shared,
  * spec-fixed system all three apps use.
  */
@@ -19,8 +19,9 @@
   --accent-contrast: #ffffff;
   --danger: #b3261e;
   --success: #1a6b4a;
-  --gs-wordmark-grace: #372aac;
-  --gs-wordmark-soft: #1a1a1a;
+  --gs-brand-grace: #372aac;
+  --gs-brand-soft: #101011;
+  --gs-brand-product: #606060;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -37,8 +38,9 @@
     --accent-contrast: #f5f5f5;
     --danger: #ff6b6b;
     --success: #4ade80;
-    --gs-wordmark-grace: #a79fe4;
-    --gs-wordmark-soft: #f5f5f5;
+    --gs-brand-grace: #a79fe4;
+    --gs-brand-soft: #f5f5f5;
+    --gs-brand-product: #b3b3b3;
   }
 }
 
@@ -81,18 +83,14 @@ pre {
   font-family: var(--font-playfair), Georgia, serif;
 }
 
-.gs-wordmark-grace {
-  fill: var(--gs-wordmark-grace);
+.gs-brand-grace {
+  fill: var(--gs-brand-grace);
 }
 
-.gs-wordmark-soft {
-  fill: var(--gs-wordmark-soft);
+.gs-brand-soft {
+  fill: var(--gs-brand-soft);
 }
 
-.gs-wordmark-tagline span {
-  font-family: var(--font-montserrat), sans-serif;
-  font-weight: 600;
-  font-style: italic;
-  font-size: 12px;
-  color: var(--gs-wordmark-soft);
+.gs-brand-product {
+  fill: var(--gs-brand-product);
 }
