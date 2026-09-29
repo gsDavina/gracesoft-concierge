@@ -205,208 +205,331 @@ export default function BlueprintPage() {
 
   if (!actor) return null;
 
+  const hasProcessedSource = sources.some((s) => s.status === "processed");
+
   return (
     <main>
-      <h1>Blueprint</h1>
-      <p style={{ color: "var(--muted)" }}>
-        Submit source material, generate a draft, then review and edit it here before publishing.
-      </p>
-
-      {error && <p style={{ color: "var(--danger)" }}>{error}</p>}
-      {notice && <p style={{ color: "var(--accent)" }}>{notice}</p>}
-
-      <section style={sectionStyle}>
-        <h2 style={h2Style}>1. Input: submit sources</h2>
-        <form onSubmit={handleSubmitUrl} style={{ display: "flex", gap: 12, flexWrap: "wrap", marginBottom: 16 }}>
-          <input
-            placeholder="https://your-clinic-website.com"
-            value={urlInput}
-            onChange={(e) => setUrlInput(e.target.value)}
-            style={{ flex: 1, minWidth: 240, padding: 10, border: "1px solid var(--border)", borderRadius: 8 }}
-          />
-          <button type="submit" disabled={!!busy} style={buttonStyle}>
-            Submit URL
-          </button>
-        </form>
-        <label style={{ display: "inline-block" }}>
-          <span style={{ display: "block", marginBottom: 6, fontSize: 14, color: "var(--muted)" }}>
-            Or upload a document (.txt/.md)
-          </span>
-          <input ref={fileInputRef} type="file" accept=".txt,.md,text/plain,text/markdown" onChange={handleUploadFile} disabled={!!busy} />
-        </label>
-
-        {sources.length > 0 && (
-          <table style={{ marginTop: 16 }}>
-            <thead>
-              <tr>
-                <th>Source</th>
-                <th>Status</th>
-                <th>Submitted</th>
-              </tr>
-            </thead>
-            <tbody>
-              {sources.map((source) => (
-                <tr key={source.id}>
-                  <td>{source.type === "url" ? source.url : source.fileName}</td>
-                  <td>
-                    {source.status}
-                    {source.status === "failed" && source.errorMessage ? ` — ${source.errorMessage}` : ""}
-                  </td>
-                  <td>{new Date(source.createdAt).toLocaleString()}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </section>
-
-      <section style={sectionStyle}>
-        <h2 style={h2Style}>2. Auto-draft</h2>
-        <p style={{ color: "var(--muted)", fontSize: 14 }}>
-          Generates services/hours/FAQs from every successfully-processed source above, overwriting the
-          current draft below.
-        </p>
-        <button
-          type="button"
-          onClick={handleGenerateDraft}
-          disabled={!!busy || sources.every((s) => s.status !== "processed")}
-          style={buttonStyle}
-        >
-          Generate draft from sources
-        </button>
-
-        <p style={{ color: "var(--muted)", fontSize: 14, marginTop: 16 }}>
-          Or start from a pre-built template for your vertical (Phase 2: Healthcare) —
-          generic placeholder content you edit rather than write from scratch.
-        </p>
-        <button type="button" onClick={handleLoadClinicTemplate} disabled={!!busy} style={buttonStyle}>
-          Load GP clinic template
-        </button>
-      </section>
-
-      <section style={sectionStyle}>
-        <h2 style={h2Style}>3. Review &amp; edit</h2>
-        {blueprint && (
-          <p style={{ fontSize: 14, color: "var(--muted)" }}>
-            Status: <strong>{blueprint.status}</strong>
-            {blueprint.generatedByLlm ? " (LLM-generated, not yet hand-reviewed)" : ""}
-            {blueprint.publishedAt ? ` — published ${new Date(blueprint.publishedAt).toLocaleString()}` : ""}
+      <header className="page-header">
+        <div>
+          <div className="eyebrow">Setup</div>
+          <h1 className="page-title">Blueprint</h1>
+          <p className="page-subtitle">
+            Everything your concierge knows about your business. Add sources, generate a draft, then
+            review it before it goes live.
           </p>
+        </div>
+        {blueprint && (
+          <span className={`badge ${blueprint.status === "published" ? "badge-success" : "badge-warning"}`}>
+            {blueprint.status}
+          </span>
         )}
+      </header>
 
-        <h3 style={h3Style}>Services</h3>
-        {services.map((service, i) => (
-          <div key={i} style={rowStyle}>
-            <input
-              placeholder="Name"
-              value={service.name}
-              onChange={(e) => updateAt(setServices, i, { ...service, name: e.target.value })}
-              style={inputStyle}
-            />
-            <input
-              placeholder="Description"
-              value={service.description ?? ""}
-              onChange={(e) => updateAt(setServices, i, { ...service, description: e.target.value })}
-              style={{ ...inputStyle, flex: 2 }}
-            />
-            <input
-              type="number"
-              placeholder="Minutes"
-              value={service.durationMinutes ?? ""}
-              onChange={(e) =>
-                updateAt(setServices, i, {
-                  ...service,
-                  durationMinutes: e.target.value ? Number(e.target.value) : undefined,
-                })
-              }
-              style={{ ...inputStyle, width: 100 }}
-            />
-            <button type="button" onClick={() => removeAt(setServices, i)} style={removeButtonStyle}>
-              Remove
-            </button>
+      {error && (
+        <div role="alert" className="alert alert-danger">
+          {error}
+        </div>
+      )}
+      {notice && <div className="alert alert-info">{notice}</div>}
+
+      <section className="card">
+        <div className="card-header">
+          <div style={{ display: "flex" }}>
+            <span className="step-number">1</span>
+            <div>
+              <h2 className="card-title">Add sources</h2>
+              <p className="card-description">Your website or a document describing your services.</p>
+            </div>
           </div>
-        ))}
-        <button type="button" onClick={() => setServices((s) => [...s, { name: "" }])} style={addButtonStyle}>
-          + Add service
-        </button>
-
-        <h3 style={h3Style}>Hours</h3>
-        {hours.map((h, i) => (
-          <div key={h.day} style={rowStyle}>
-            <span style={{ width: 100, textTransform: "capitalize" }}>{h.day}</span>
-            <label style={{ display: "flex", alignItems: "center", gap: 6 }}>
+        </div>
+        <div className="card-body">
+          <form onSubmit={handleSubmitUrl} className="form-row">
+            <label className="field" style={{ flex: 1, minWidth: 240 }}>
+              <span className="label">Website URL</span>
               <input
-                type="checkbox"
-                checked={!h.closed}
-                onChange={(e) => updateAt(setHours, i, { ...h, closed: !e.target.checked })}
+                className="input"
+                placeholder="https://your-clinic-website.com"
+                value={urlInput}
+                onChange={(e) => setUrlInput(e.target.value)}
               />
-              Open
             </label>
-            {!h.closed && (
-              <>
-                <input
-                  type="time"
-                  value={h.opens ?? ""}
-                  onChange={(e) => updateAt(setHours, i, { ...h, opens: e.target.value })}
-                  style={inputStyle}
-                />
-                <span>to</span>
-                <input
-                  type="time"
-                  value={h.closes ?? ""}
-                  onChange={(e) => updateAt(setHours, i, { ...h, closes: e.target.value })}
-                  style={inputStyle}
-                />
-              </>
-            )}
-          </div>
-        ))}
-
-        <h3 style={h3Style}>FAQs</h3>
-        {faqs.map((faq, i) => (
-          <div key={i} style={rowStyle}>
-            <input
-              placeholder="Question"
-              value={faq.question}
-              onChange={(e) => updateAt(setFaqs, i, { ...faq, question: e.target.value })}
-              style={inputStyle}
-            />
-            <input
-              placeholder="Answer"
-              value={faq.answer}
-              onChange={(e) => updateAt(setFaqs, i, { ...faq, answer: e.target.value })}
-              style={{ ...inputStyle, flex: 2 }}
-            />
-            <button type="button" onClick={() => removeAt(setFaqs, i)} style={removeButtonStyle}>
-              Remove
+            <button type="submit" disabled={!!busy || !urlInput.trim()} className="btn btn-primary">
+              Submit URL
             </button>
+          </form>
+          <div className="divider-text">or</div>
+          <label className="dropzone">
+            <UploadIcon />
+            <span>
+              <strong style={{ color: "var(--text)" }}>
+                {busy === "uploading document" ? "Uploading…" : "Upload a document"}
+              </strong>
+              <span className="hint" style={{ display: "block" }}>
+                Plain text or Markdown (.txt, .md)
+              </span>
+            </span>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".txt,.md,text/plain,text/markdown"
+              onChange={handleUploadFile}
+              disabled={!!busy}
+              style={{ position: "absolute", width: 1, height: 1, opacity: 0 }}
+            />
+          </label>
+        </div>
+        {sources.length > 0 && (
+          <div className="table-wrap" style={{ borderTop: "1px solid var(--border)" }}>
+            <table className="table">
+              <thead>
+                <tr>
+                  <th>Source</th>
+                  <th>Status</th>
+                  <th>Submitted</th>
+                </tr>
+              </thead>
+              <tbody>
+                {sources.map((source) => (
+                  <tr key={source.id}>
+                    <td className="wrap">{source.type === "url" ? source.url : source.fileName}</td>
+                    <td className="wrap">
+                      <span className={`badge ${SOURCE_BADGE[source.status]}`}>{source.status}</span>
+                      {source.status === "failed" && source.errorMessage && (
+                        <div className="hint" style={{ color: "var(--danger)", marginTop: 4 }}>
+                          {source.errorMessage}
+                        </div>
+                      )}
+                    </td>
+                    <td>{new Date(source.createdAt).toLocaleString()}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
-        ))}
-        <button
-          type="button"
-          onClick={() => setFaqs((f) => [...f, { question: "", answer: "" }])}
-          style={addButtonStyle}
-        >
-          + Add FAQ
-        </button>
+        )}
+      </section>
 
-        <div style={{ display: "flex", gap: 12, marginTop: 24 }}>
-          <button type="button" onClick={handleSaveDraft} disabled={!!busy} style={buttonStyle}>
-            Save draft
+      <section className="card">
+        <div className="card-header">
+          <div style={{ display: "flex" }}>
+            <span className="step-number">2</span>
+            <div>
+              <h2 className="card-title">Create a draft</h2>
+              <p className="card-description">Either option replaces the current draft below.</p>
+            </div>
+          </div>
+        </div>
+        <div className="card-body">
+          <div className="option-grid">
+            <div className="option">
+              <strong>Generate from sources</strong>
+              <p>Extracts services, hours, and FAQs from every successfully processed source above.</p>
+              <button
+                type="button"
+                onClick={handleGenerateDraft}
+                disabled={!!busy || !hasProcessedSource}
+                className="btn btn-primary"
+              >
+                {busy === "generating draft" ? "Generating…" : "Generate draft"}
+              </button>
+            </div>
+            <div className="option">
+              <strong>Start from a template</strong>
+              <p>
+                A generic GP clinic template (Phase 2: Healthcare) — placeholder content you edit rather
+                than write from scratch.
+              </p>
+              <button type="button" onClick={handleLoadClinicTemplate} disabled={!!busy} className="btn">
+                Load GP clinic template
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="card">
+        <div className="card-header">
+          <div style={{ display: "flex" }}>
+            <span className="step-number">3</span>
+            <div>
+              <h2 className="card-title">Review &amp; publish</h2>
+              <p className="card-description">
+                {blueprint
+                  ? [
+                      blueprint.generatedByLlm ? "LLM-generated, not yet hand-reviewed" : "Hand-edited",
+                      blueprint.publishedAt
+                        ? `last published ${new Date(blueprint.publishedAt).toLocaleString()}`
+                        : "never published",
+                    ].join(" · ")
+                  : "Nothing saved yet."}
+              </p>
+            </div>
+          </div>
+        </div>
+        <div className="card-body">
+          <div className="editor-section">
+            <div className="editor-section-header">
+              <h3 className="editor-section-title">Services</h3>
+              <button
+                type="button"
+                onClick={() => setServices((s) => [...s, { name: "" }])}
+                className="btn btn-sm"
+              >
+                + Add service
+              </button>
+            </div>
+            {services.length === 0 && <p className="hint">No services yet.</p>}
+            <div className="editor-rows">
+              {services.map((service, i) => (
+                <div key={i} className="editor-row">
+                  <input
+                    className="input"
+                    placeholder="Name"
+                    aria-label="Service name"
+                    value={service.name}
+                    onChange={(e) => updateAt(setServices, i, { ...service, name: e.target.value })}
+                    style={{ flex: 1 }}
+                  />
+                  <input
+                    className="input"
+                    placeholder="Description"
+                    aria-label="Service description"
+                    value={service.description ?? ""}
+                    onChange={(e) => updateAt(setServices, i, { ...service, description: e.target.value })}
+                    style={{ flex: 2 }}
+                  />
+                  <input
+                    className="input"
+                    type="number"
+                    placeholder="Min"
+                    aria-label="Duration in minutes"
+                    value={service.durationMinutes ?? ""}
+                    onChange={(e) =>
+                      updateAt(setServices, i, {
+                        ...service,
+                        durationMinutes: e.target.value ? Number(e.target.value) : undefined,
+                      })
+                    }
+                    style={{ width: 90 }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => removeAt(setServices, i)}
+                    className="btn btn-sm btn-danger-ghost"
+                  >
+                    Remove
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="editor-section">
+            <div className="editor-section-header">
+              <h3 className="editor-section-title">Opening hours</h3>
+            </div>
+            <div className="hours-grid">
+              {hours.map((h, i) => (
+                <div key={h.day} className="hours-row">
+                  <span style={{ textTransform: "capitalize", fontWeight: 500 }}>{h.day}</span>
+                  <label className="switch">
+                    <input
+                      type="checkbox"
+                      checked={!h.closed}
+                      onChange={(e) => updateAt(setHours, i, { ...h, closed: !e.target.checked })}
+                    />
+                    {h.closed ? "Closed" : "Open"}
+                  </label>
+                  {!h.closed && (
+                    <div className="hours-times">
+                      <input
+                        className="input"
+                        type="time"
+                        aria-label={`${h.day} opens`}
+                        value={h.opens ?? ""}
+                        onChange={(e) => updateAt(setHours, i, { ...h, opens: e.target.value })}
+                      />
+                      <span>to</span>
+                      <input
+                        className="input"
+                        type="time"
+                        aria-label={`${h.day} closes`}
+                        value={h.closes ?? ""}
+                        onChange={(e) => updateAt(setHours, i, { ...h, closes: e.target.value })}
+                      />
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="editor-section">
+            <div className="editor-section-header">
+              <h3 className="editor-section-title">FAQs</h3>
+              <button
+                type="button"
+                onClick={() => setFaqs((f) => [...f, { question: "", answer: "" }])}
+                className="btn btn-sm"
+              >
+                + Add FAQ
+              </button>
+            </div>
+            {faqs.length === 0 && <p className="hint">No FAQs yet.</p>}
+            <div className="editor-rows">
+              {faqs.map((faq, i) => (
+                <div key={i} className="editor-row">
+                  <input
+                    className="input"
+                    placeholder="Question"
+                    aria-label="Question"
+                    value={faq.question}
+                    onChange={(e) => updateAt(setFaqs, i, { ...faq, question: e.target.value })}
+                    style={{ flex: 1 }}
+                  />
+                  <input
+                    className="input"
+                    placeholder="Answer"
+                    aria-label="Answer"
+                    value={faq.answer}
+                    onChange={(e) => updateAt(setFaqs, i, { ...faq, answer: e.target.value })}
+                    style={{ flex: 2 }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => removeAt(setFaqs, i)}
+                    className="btn btn-sm btn-danger-ghost"
+                  >
+                    Remove
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+        <div className="card-footer">
+          <button type="button" onClick={handleSaveDraft} disabled={!!busy} className="btn">
+            {busy === "saving" ? "Saving…" : "Save draft"}
           </button>
           <button
             type="button"
             onClick={handlePublish}
             disabled={!!busy || !blueprint}
-            style={{ ...buttonStyle, background: "var(--accent-solid)", color: "var(--accent-contrast)" }}
+            className="btn btn-primary"
           >
-            Publish (go live)
+            {busy === "publishing" ? "Publishing…" : "Publish (go live)"}
           </button>
         </div>
       </section>
     </main>
   );
 }
+
+const SOURCE_BADGE: Record<OnboardingSource["status"], string> = {
+  pending: "badge-warning",
+  processed: "badge-success",
+  failed: "badge-danger",
+};
 
 function updateAt<T>(setter: (fn: (list: T[]) => T[]) => void, index: number, value: T) {
   setter((list) => list.map((item, i) => (i === index ? value : item)));
@@ -416,40 +539,20 @@ function removeAt<T>(setter: (fn: (list: T[]) => T[]) => void, index: number) {
   setter((list) => list.filter((_, i) => i !== index));
 }
 
-const sectionStyle: React.CSSProperties = {
-  background: "var(--surface)",
-  border: "1px solid var(--border)",
-  borderRadius: 12,
-  padding: 20,
-  marginBottom: 24,
-};
-const h2Style: React.CSSProperties = { fontSize: 18, marginTop: 0 };
-const h3Style: React.CSSProperties = { fontSize: 15, marginTop: 20, marginBottom: 8 };
-const rowStyle: React.CSSProperties = { display: "flex", gap: 10, alignItems: "center", marginBottom: 8 };
-const inputStyle: React.CSSProperties = {
-  flex: 1,
-  padding: 8,
-  border: "1px solid var(--border)",
-  borderRadius: 6,
-};
-const buttonStyle: React.CSSProperties = {
-  padding: "10px 18px",
-  background: "var(--surface)",
-  color: "var(--text)",
-  border: "1px solid var(--border)",
-  borderRadius: 8,
-  cursor: "pointer",
-};
-const addButtonStyle: React.CSSProperties = {
-  ...buttonStyle,
-  padding: "6px 12px",
-  fontSize: 13,
-};
-const removeButtonStyle: React.CSSProperties = {
-  padding: "6px 10px",
-  background: "none",
-  color: "var(--danger)",
-  border: "1px solid var(--border)",
-  borderRadius: 6,
-  cursor: "pointer",
-};
+function UploadIcon() {
+  return (
+    <svg
+      width="22"
+      height="22"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M12 16V4M7 9l5-5 5 5M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3" />
+    </svg>
+  );
+}

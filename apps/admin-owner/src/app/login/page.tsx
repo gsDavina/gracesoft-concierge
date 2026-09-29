@@ -22,48 +22,45 @@ export default function LoginPage() {
   }
 
   return (
-    <main style={{ maxWidth: 480, margin: "10vh auto", padding: "0 24px" }}>
-      <div style={{ display: "flex", justifyContent: "center", marginBottom: 32 }}>
-        <Wordmark width={260} />
-      </div>
-      <h1 style={{ fontSize: 28 }}>Owner sign-in (dev)</h1>
-      <p style={{ color: "var(--muted)" }}>
-        Placeholder for real staff auth. Enter the business and staff ids to seed an owner
-        session.
-      </p>
-      <form onSubmit={handleSubmit} style={{ display: "grid", gap: 16, marginTop: 24 }}>
-        <label style={{ display: "grid", gap: 8 }}>
-          Business ID
-          <input
-            value={businessId}
-            onChange={(e) => setBusinessId(e.target.value)}
-            style={inputStyle}
-          />
-        </label>
-        <label style={{ display: "grid", gap: 8 }}>
-          Staff auth subject (StaffUser.authSubject)
-          <input value={userId} onChange={(e) => setUserId(e.target.value)} style={inputStyle} />
-        </label>
-        <button type="submit" style={buttonStyle}>
-          Sign in
-        </button>
-      </form>
+    <main className="auth">
+      <section className="auth-brand">
+        <Wordmark width={240} />
+        <div>
+          <h2>Run your front of house from one console.</h2>
+          <p>Bookings, your business blueprint, and the restricted identity audit log — for owners only.</p>
+        </div>
+        <p style={{ fontSize: 12, color: "#a79fe4", margin: 0 }}>Owner console</p>
+      </section>
+      <section className="auth-form">
+        <div className="auth-form-inner">
+          <span className="badge badge-warning" style={{ marginBottom: 16 }}>
+            Development sign-in
+          </span>
+          <h1 className="page-title">Sign in to Admin</h1>
+          <p className="page-subtitle" style={{ marginBottom: 28 }}>
+            Placeholder for real staff auth. Enter the business and staff ids to start an owner session.
+          </p>
+          <form onSubmit={handleSubmit} style={{ display: "grid", gap: 18 }}>
+            <label className="field">
+              <span className="label">Business ID</span>
+              <input className="input mono" value={businessId} onChange={(e) => setBusinessId(e.target.value)} />
+            </label>
+            <label className="field">
+              <span className="label">Staff auth subject</span>
+              <input className="input mono" value={userId} onChange={(e) => setUserId(e.target.value)} />
+              <span className="hint">StaffUser.authSubject</span>
+            </label>
+            <button
+              type="submit"
+              className="btn btn-primary btn-block"
+              disabled={!businessId.trim() || !userId.trim()}
+              style={{ padding: "11px 16px", marginTop: 4 }}
+            >
+              Sign in
+            </button>
+          </form>
+        </div>
+      </section>
     </main>
   );
 }
-
-const inputStyle: React.CSSProperties = {
-  padding: 12,
-  fontSize: 16,
-  border: "1px solid var(--border)",
-  borderRadius: 8,
-};
-
-const buttonStyle: React.CSSProperties = {
-  padding: "12px 20px",
-  fontSize: 16,
-  background: "var(--accent-solid)",
-  color: "var(--accent-contrast)",
-  border: "none",
-  borderRadius: 8,
-};

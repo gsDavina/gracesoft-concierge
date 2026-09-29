@@ -22,48 +22,35 @@ export default function LoginPage() {
   }
 
   return (
-    <main style={{ maxWidth: 480, margin: "10vh auto", padding: "0 24px" }}>
-      <div style={{ display: "flex", justifyContent: "center", marginBottom: 32 }}>
-        <Wordmark width={260} />
+    <main className="auth">
+      <div className="auth-card">
+        <Wordmark width={280} />
+        <h1 className="auth-title">Start the front desk</h1>
+        <p className="auth-subtitle">
+          Sign in to open today&apos;s check-in queue on this device.
+        </p>
+        <form onSubmit={handleSubmit} style={{ display: "grid", gap: 20, marginTop: 32 }}>
+          <label className="field">
+            Business ID
+            <input className="input" value={businessId} onChange={(e) => setBusinessId(e.target.value)} />
+          </label>
+          <label className="field">
+            Staff ID
+            <input className="input" value={userId} onChange={(e) => setUserId(e.target.value)} />
+          </label>
+          <button
+            type="submit"
+            className="check-in"
+            disabled={!businessId.trim() || !userId.trim()}
+            style={{ width: "100%", marginTop: 8, cursor: "pointer" }}
+          >
+            Open check-in
+          </button>
+        </form>
+        <p style={{ marginTop: 24, textAlign: "center" }}>
+          <span className="dev-note">Dev sign-in · StaffUser.authSubject</span>
+        </p>
       </div>
-      <h1 style={{ fontSize: 28 }}>Kiosk sign-in (dev)</h1>
-      <p style={{ color: "var(--muted)" }}>
-        Placeholder for real staff auth. Enter the business and staff ids to seed a
-        front-desk session.
-      </p>
-      <form onSubmit={handleSubmit} style={{ display: "grid", gap: 16, marginTop: 24 }}>
-        <label style={{ display: "grid", gap: 8 }}>
-          Business ID
-          <input
-            value={businessId}
-            onChange={(e) => setBusinessId(e.target.value)}
-            style={inputStyle}
-          />
-        </label>
-        <label style={{ display: "grid", gap: 8 }}>
-          Staff auth subject (StaffUser.authSubject)
-          <input value={userId} onChange={(e) => setUserId(e.target.value)} style={inputStyle} />
-        </label>
-        <button type="submit" style={buttonStyle}>
-          Sign in
-        </button>
-      </form>
     </main>
   );
 }
-
-const inputStyle: React.CSSProperties = {
-  padding: 12,
-  fontSize: 18,
-  border: "1px solid var(--border)",
-  borderRadius: 8,
-};
-
-const buttonStyle: React.CSSProperties = {
-  padding: "14px 20px",
-  fontSize: 18,
-  background: "var(--accent-solid)",
-  color: "var(--accent-contrast)",
-  border: "none",
-  borderRadius: 8,
-};

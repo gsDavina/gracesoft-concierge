@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { estimatedMonthlyMetaCost, PRICING_CONFIG } from "@/lib/pricingConfig";
-import { Wordmark } from "@/brand/Wordmark";
+import Image from "next/image";
+import { BRAND } from "@/brand/config";
 
 export const metadata = {
   title: "GraceSoft Concierge Demo — Pricing (draft)",
@@ -39,7 +40,7 @@ export default function PricingPage() {
 
       <header style={{ textAlign: "center", marginBottom: 40 }}>
         <div style={{ display: "flex", justifyContent: "center", marginBottom: 24 }}>
-          <Wordmark width={260} />
+          <Image src="/brand/wm-d-w.svg" alt={BRAND.fullName} width={260} height={68} unoptimized priority />
         </div>
         <p style={{ color: "var(--accent)", fontWeight: 600, letterSpacing: 0.5, marginBottom: 8 }}>
           PRICING

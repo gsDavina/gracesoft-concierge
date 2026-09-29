@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { ApiError, checkIn, fetchTodaysQueue } from "@/lib/api";
 import { clearDevSession, loadDevSession } from "@/lib/session";
-import { Mark } from "@/brand/Mark";
+import Image from "next/image";
 import { BRAND } from "@/brand/config";
 
 const POLL_INTERVAL_MS = 15_000;
@@ -16,6 +16,7 @@ export default function QueuePage() {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [checkingInToken, setCheckingInToken] = useState<string | null>(null);
+  const now = useNow();
 
   useEffect(() => {
     const session = loadDevSession();
@@ -67,95 +68,147 @@ export default function QueuePage() {
   const arrived = bookings.filter((b) => b.status === "checked-in");
 
   return (
-    <main style={{ padding: 24, maxWidth: 900, margin: "0 auto" }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20 }}>
-        <Mark size={34} />
-        <span style={{ fontFamily: "var(--font-montserrat)", fontStyle: "italic", fontSize: 16 }}>
-          <span style={{ fontWeight: 800, color: "var(--gs-brand-grace)" }}>Grace</span>
-          <span style={{ fontWeight: 600 }}>Soft</span> Concierge{" "}
-          <span style={{ color: "var(--gs-brand-product)" }}>{BRAND.productName}</span>
-        </span>
-      </div>
-      <h1 style={{ fontSize: 32, marginBottom: 4 }}>Today&apos;s check-in queue</h1>
-      <p style={{ color: "var(--muted)", marginTop: 0 }}>
-        {new Date().toLocaleDateString(undefined, {
-          weekday: "long",
-          year: "numeric",
-          month: "long",
-          day: "numeric",
-        })}
-      </p>
+    <>
+      <header className="band">
+        <div className="band-top">
+          <div className="band-brand">
+            <Image src="/brand/wm-k-w.svg" alt={BRAND.fullName} width={200} height={52} unoptimized priority />
+          </div>
+          <button
+            type="button"
+            className="band-signout"
+            onClick={() => {
+              clearDevSession();
+              router.replace("/login");
+            }}
+          >
+            Sign out
+          </button>
+        </div>
+        <div className="band-hero">
+          <div>
+            <h1 className="band-title">Front desk check-in</h1>
+            <p className="band-date">
+              {now.toLocaleDateString(undefined, {
+                weekday: "long",
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+              })}
+            </p>
+          </div>
+          <div className="band-clock" aria-label="Current time">
+            {formatTime(now.toISOString())}
+          </div>
+        </div>
+      </header>
 
-      {error && (
-        <p role="alert" style={{ color: "var(--danger)" }}>
-          {error}
-        </p>
-      )}
+      <main className="board">
+        <div className="stats">
+          <div className="stat stat-waiting">
+            <div className="stat-label">Waiting</div>
+            <div className="stat-value">{waiting.length}</div>
+          </div>
+          <div className="stat stat-arrived">
+            <div className="stat-label">Arrived</div>
+            <div className="stat-value">{arrived.length}</div>
+          </div>
+          <div className="stat stat-next">
+            <div className="stat-label">Next up</div>
+            <div className="stat-value">{waiting[0] ? formatTime(waiting[0].startsAt) : "—"}</div>
+          </div>
+        </div>
 
-      <section>
-        <h2 style={{ fontSize: 22 }}>Waiting ({waiting.length})</h2>
-        {waiting.length === 0 && <p style={{ color: "var(--muted)" }}>No one waiting.</p>}
-        <ul style={{ listStyle: "none", padding: 0, display: "grid", gap: 12 }}>
-          {waiting.map((booking) => (
-            <li key={booking.id} style={cardStyle}>
-              <div>
-                <div style={{ fontSize: 24, fontWeight: 700 }}>{formatTime(booking.startsAt)}</div>
-                <div style={{ color: "var(--muted)" }}>{booking.serviceType}</div>
-                <div style={{ fontFamily: "monospace", fontSize: 14, color: "var(--muted)" }}>
-                  Token: {booking.token}
-                </div>
+        {error && (
+          <p role="alert" className="alert">
+            {error}
+          </p>
+        )}
+
+        <div className="columns">
+          <section>
+            <h2 className="column-title">
+              Waiting <span className="count">{waiting.length}</span>
+            </h2>
+            {waiting.length === 0 ? (
+              <div className="empty">
+                <strong>No one waiting</strong>
+                New arrivals for today will appear here.
               </div>
-              <button
-                onClick={() => handleCheckIn(booking.token)}
-                disabled={checkingInToken === booking.token}
-                style={checkInButtonStyle}
-              >
-                {checkingInToken === booking.token ? "Checking in…" : "Check in"}
-              </button>
-            </li>
-          ))}
-        </ul>
-      </section>
+            ) : (
+              <ul className="queue">
+                {waiting.map((booking, i) => (
+                  <li key={booking.id} className={i === 0 ? "ticket ticket-next" : "ticket"}>
+                    <div className="ticket-time">{formatTime(booking.startsAt)}</div>
+                    <div className="ticket-body">
+                      {i === 0 && <div className="next-tag">Next up</div>}
+                      <div className="ticket-service">{booking.serviceType}</div>
+                      <span className="ticket-token">{booking.token}</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleCheckIn(booking.token)}
+                      disabled={checkingInToken === booking.token}
+                      className="check-in"
+                    >
+                      {checkingInToken === booking.token ? "Checking in…" : "Check in"}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
 
-      <section style={{ marginTop: 32 }}>
-        <h2 style={{ fontSize: 22 }}>Arrived ({arrived.length})</h2>
-        <ul style={{ listStyle: "none", padding: 0, display: "grid", gap: 12 }}>
-          {arrived.map((booking) => (
-            <li key={booking.id} style={{ ...cardStyle, opacity: 0.7 }}>
-              <div>
-                <div style={{ fontSize: 20, fontWeight: 700 }}>{formatTime(booking.startsAt)}</div>
-                <div style={{ color: "var(--muted)" }}>{booking.serviceType}</div>
-              </div>
-              <span style={{ color: "var(--accent)", fontWeight: 700 }}>✓ Arrived</span>
-            </li>
-          ))}
-        </ul>
-      </section>
-    </main>
+          <section>
+            <h2 className="column-title">
+              Arrived <span className="count count-arrived">{arrived.length}</span>
+            </h2>
+            {arrived.length === 0 ? (
+              <div className="empty">Checked-in guests will be listed here.</div>
+            ) : (
+              <ul className="queue" style={{ gap: 10 }}>
+                {arrived.map((booking) => (
+                  <li key={booking.id} className="arrived">
+                    <span className="arrived-check" aria-label="Arrived">
+                      <svg
+                        width="24"
+                        height="24"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="3"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        aria-hidden="true"
+                      >
+                        <path d="m5 12 5 5 9-10" />
+                      </svg>
+                    </span>
+                    <div>
+                      <div className="arrived-time">{formatTime(booking.startsAt)}</div>
+                      <div className="arrived-service">{booking.serviceType}</div>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+        </div>
+      </main>
+    </>
   );
+}
+
+/** Ticks once every 30s — enough to keep the header clock's minute current. */
+function useNow(): Date {
+  const [now, setNow] = useState(() => new Date());
+  useEffect(() => {
+    const interval = setInterval(() => setNow(new Date()), 30_000);
+    return () => clearInterval(interval);
+  }, []);
+  return now;
 }
 
 function formatTime(iso: string): string {
   return new Date(iso).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
 }
-
-const cardStyle: React.CSSProperties = {
-  display: "flex",
-  justifyContent: "space-between",
-  alignItems: "center",
-  background: "var(--surface)",
-  border: "1px solid var(--border)",
-  borderRadius: 12,
-  padding: 20,
-};
-
-const checkInButtonStyle: React.CSSProperties = {
-  padding: "18px 28px",
-  fontSize: 20,
-  fontWeight: 700,
-  background: "var(--accent-solid)",
-  color: "var(--accent-contrast)",
-  border: "none",
-  borderRadius: 10,
-  minWidth: 160,
-};

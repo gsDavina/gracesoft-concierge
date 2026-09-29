@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { Montserrat, Source_Code_Pro } from "next/font/google";
 import "./globals.css";
-import { NavBar } from "./NavBar";
+import { AppShell } from "./AppShell";
 
 const montserrat = Montserrat({
   subsets: ["latin"],
@@ -29,8 +29,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" className={`${montserrat.variable} ${sourceCodePro.variable}`}>
       <body>
-        <NavBar />
-        <div style={{ maxWidth: 960, margin: "0 auto", padding: "24px" }}>{children}</div>
+        <AppShell>{children}</AppShell>
       </body>
     </html>
   );

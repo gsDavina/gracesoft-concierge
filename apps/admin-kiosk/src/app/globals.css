@@ -2,21 +2,42 @@
  * Brand palette from _internal-docs/09-branding-guidelines.md. Light mode maps the
  * same Purple/Black scale onto light surfaces; dark mode reuses the guideline's
  * explicit role table verbatim (it specifies exact shades for WCAG AA, not just "invert").
- * Kiosk's own accent tint (Purple 500, plus a soft Purple 50 wash) only applies in light
- * mode — dark mode is the shared, spec-fixed system all three apps use.
+ *
+ * Kiosk is the front-desk touch screen: a solid Purple 600 header band, a Purple 50
+ * wash, oversized type and 64px+ touch targets — deliberately unlike Admin's dark
+ * sidebar + dense tables, so staff can tell the two apps apart at a glance.
  */
 :root {
   color-scheme: light;
   --bg: #f2f1fb;
   --surface: #ffffff;
-  --border: #c9c5ef;
+  --border: #e4e2f7;
+  --border-strong: #c9c5ef;
   --text: #1a1a1a;
   --muted: #666666;
-  --accent: #5a4cc7;
-  --accent-hover: #372aac;
-  --accent-solid: #5a4cc7;
+  --accent: #372aac;
+  --accent-hover: #2e2392;
+  --accent-solid: #372aac;
+  --accent-solid-hover: #2e2392;
   --accent-contrast: #f5f5f5;
+  --accent-soft: #e4e2f7;
+  --focus: #5a4cc7;
   --danger: #b3261e;
+  --danger-soft: #fdf1f0;
+  --success: #1e7a46;
+  --success-soft: #eef8f2;
+  --success-border: #9fd8b6;
+  --warning: #8a5a00;
+  --warning-soft: #fdf6e7;
+  --warning-border: #f0c060;
+  --waiting-border: #c9c5ef;
+
+  --band-bg: #372aac;
+  --band-text: #f5f5f5;
+  --band-muted: #c9c5ef;
+
+  --shadow: 0 2px 8px rgba(55, 42, 172, 0.08);
+
   --gs-brand-grace: #372aac;
   --gs-brand-soft: #101011;
   --gs-brand-product: #606060;
@@ -27,14 +48,33 @@
     color-scheme: dark;
     --bg: #000000;
     --surface: #1a1a1a;
-    --border: #4d4d4d;
+    --border: #333333;
+    --border-strong: #4d4d4d;
     --text: #f5f5f5;
     --muted: #b3b3b3;
     --accent: #a79fe4;
     --accent-hover: #c9c5ef;
     --accent-solid: #372aac;
+    --accent-solid-hover: #2e2392;
     --accent-contrast: #f5f5f5;
+    --accent-soft: #120e3f;
+    --focus: #a79fe4;
     --danger: #ff6b6b;
+    --danger-soft: #2a1212;
+    --success: #6fd49a;
+    --success-soft: #0f2419;
+    --success-border: #1e7a46;
+    --warning: #f0c060;
+    --warning-soft: #2a2110;
+    --warning-border: #8a5a00;
+    --waiting-border: #5a4cc7;
+
+    --band-bg: #372aac;
+    --band-text: #f5f5f5;
+    --band-muted: #c9c5ef;
+
+    --shadow: none;
+
     --gs-brand-grace: #a79fe4;
     --gs-brand-soft: #f5f5f5;
     --gs-brand-product: #b3b3b3;
@@ -49,18 +89,44 @@ html,
 body {
   margin: 0;
   padding: 0;
+  min-height: 100vh;
   background: var(--bg);
   color: var(--text);
   font-family: var(--font-montserrat), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   /* Kiosk mode: large default text, no accidental zoom/selection. */
   font-size: 20px;
+  line-height: 1.4;
+  -webkit-font-smoothing: antialiased;
   -webkit-user-select: none;
   user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+h1,
+h2,
+p {
+  margin: 0;
+}
+
+button,
+input {
+  font: inherit;
+  color: inherit;
 }
 
 button {
-  font: inherit;
   cursor: pointer;
+}
+
+input {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 3px;
 }
 
 code,
@@ -78,4 +144,483 @@ pre {
 
 .gs-brand-product {
   fill: var(--gs-brand-product);
+}
+
+/* ---------- Header band ---------- */
+
+.band {
+  /* White colourway of the mark on the purple band. */
+  --gs-brand-grace: #c9c5ef;
+  --gs-brand-soft: #f5f5f5;
+  --gs-brand-product: #c9c5ef;
+  background: var(--band-bg);
+  color: var(--band-text);
+  padding: 20px 32px 88px;
+}
+
+.band-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+.band-brand {
+  display: flex;
+  align-items: center;
+}
+
+.band-signout {
+  background: rgba(245, 245, 245, 0.1);
+  border: 1px solid rgba(245, 245, 245, 0.25);
+  color: var(--band-text);
+  border-radius: 999px;
+  padding: 10px 20px;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.band-signout:hover {
+  background: rgba(245, 245, 245, 0.2);
+}
+
+.band-hero {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  flex-wrap: wrap;
+  max-width: 1280px;
+  margin: 36px auto 0;
+}
+
+.band-title {
+  font-size: 44px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+
+.band-date {
+  color: var(--band-muted);
+  font-size: 22px;
+  margin-top: 6px;
+}
+
+.band-clock {
+  font-size: 72px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- Board ---------- */
+
+.board {
+  max-width: 1280px;
+  margin: -56px auto 0;
+  padding: 0 32px 48px;
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  margin-bottom: 28px;
+}
+
+.stat {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  box-shadow: var(--shadow);
+  padding: 22px 26px;
+}
+
+.stat-label {
+  color: var(--muted);
+  font-size: 16px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.stat-value {
+  font-size: 48px;
+  font-weight: 800;
+  line-height: 1.1;
+  margin-top: 6px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* State colours, used consistently on tiles, column headers and cards:
+ * Waiting = purple, Arrived = green, Next up = amber. */
+.stat-label::before {
+  content: "";
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  margin-right: 10px;
+  vertical-align: 1px;
+  background: currentColor;
+}
+
+.stat-waiting {
+  background: var(--accent-soft);
+  border: 2px solid var(--waiting-border);
+  border-left: 10px solid var(--accent-solid);
+  box-shadow: 0 4px 6px -1px rgba(18, 14, 63, 0.25), 0 2px 4px rgba(55, 42, 172, 0.12), 0 10px 28px rgba(55, 42, 172, 0.22);
+}
+
+.stat-waiting .stat-label,
+.stat-waiting .stat-value {
+  color: var(--accent);
+}
+
+.stat-arrived {
+  background: var(--success-soft);
+  border: 2px solid var(--success-border);
+  border-left: 10px solid var(--success);
+  box-shadow: 0 4px 6px -1px rgba(18, 14, 63, 0.25), 0 2px 4px rgba(30, 122, 70, 0.12), 0 10px 28px rgba(30, 122, 70, 0.22);
+}
+
+.stat-arrived .stat-label,
+.stat-arrived .stat-value {
+  color: var(--success);
+}
+
+.stat-next {
+  background: var(--warning-soft);
+  border: 2px solid var(--warning-border);
+  border-left: 10px solid var(--warning);
+  box-shadow: 0 4px 6px -1px rgba(18, 14, 63, 0.25), 0 2px 4px rgba(138, 90, 0, 0.12), 0 10px 28px rgba(138, 90, 0, 0.22);
+}
+
+.stat-next .stat-label,
+.stat-next .stat-value {
+  color: var(--warning);
+}
+
+/* Black shadows vanish on the black dark-mode background, so glow in the state colour instead. */
+@media (prefers-color-scheme: dark) {
+  .stat-waiting {
+    box-shadow: 0 6px 10px -2px rgba(0, 0, 0, 0.85), 0 0 0 1px rgba(167, 159, 228, 0.15), 0 8px 28px rgba(167, 159, 228, 0.18);
+  }
+
+  .stat-arrived {
+    box-shadow: 0 6px 10px -2px rgba(0, 0, 0, 0.85), 0 0 0 1px rgba(111, 212, 154, 0.15), 0 8px 28px rgba(111, 212, 154, 0.16);
+  }
+
+  .stat-next {
+    box-shadow: 0 6px 10px -2px rgba(0, 0, 0, 0.85), 0 0 0 1px rgba(240, 192, 96, 0.15), 0 8px 28px rgba(240, 192, 96, 0.16);
+  }
+}
+
+.columns {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  gap: 28px;
+  align-items: start;
+}
+
+.column-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 26px;
+  font-weight: 700;
+  margin-bottom: 16px;
+}
+
+.count {
+  display: inline-grid;
+  place-items: center;
+  min-width: 40px;
+  height: 40px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: var(--accent-solid);
+  color: var(--accent-contrast);
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.count-arrived {
+  background: var(--success);
+  color: var(--surface);
+}
+
+/* The first waiting ticket is the "next up" one — amber to match its tile. */
+.ticket.ticket-next {
+  border-left-color: var(--warning);
+  background: linear-gradient(90deg, var(--warning-soft), var(--surface) 45%);
+}
+
+.next-tag {
+  display: inline-block;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--warning);
+  margin-bottom: 2px;
+}
+
+.queue {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 16px;
+}
+
+.ticket {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 8px solid var(--accent-solid);
+  border-radius: 20px;
+  box-shadow: var(--shadow);
+  padding: 24px 24px 24px 28px;
+}
+
+.ticket-time {
+  font-size: 40px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  min-width: 150px;
+}
+
+.ticket-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.ticket-service {
+  font-size: 24px;
+  font-weight: 600;
+}
+
+.ticket-token {
+  display: inline-block;
+  margin-top: 6px;
+  font-family: var(--font-source-code-pro), ui-monospace, monospace;
+  font-size: 16px;
+  color: var(--muted);
+}
+
+.check-in {
+  min-width: 200px;
+  min-height: 72px;
+  padding: 0 32px;
+  border: none;
+  border-radius: 16px;
+  background: var(--accent-solid);
+  color: var(--accent-contrast);
+  font-size: 24px;
+  font-weight: 700;
+  transition: transform 0.08s, background 0.15s;
+}
+
+.check-in:hover:not(:disabled) {
+  background: var(--accent-solid-hover);
+}
+
+.check-in:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.check-in:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+.arrived {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: var(--surface);
+  border: 1px solid var(--success-border);
+  border-left: 8px solid var(--success);
+  border-radius: 16px;
+  padding: 16px 20px;
+}
+
+.arrived-check {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--success);
+  color: var(--surface);
+  flex-shrink: 0;
+}
+
+.arrived-time {
+  font-size: 22px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.arrived-service {
+  font-size: 17px;
+  color: var(--muted);
+}
+
+.empty {
+  background: var(--surface);
+  border: 2px dashed var(--border-strong);
+  border-radius: 20px;
+  padding: 48px 24px;
+  text-align: center;
+  color: var(--muted);
+}
+
+.empty strong {
+  display: block;
+  color: var(--text);
+  font-size: 24px;
+  margin-bottom: 4px;
+}
+
+.alert {
+  background: var(--danger-soft);
+  color: var(--danger);
+  border: 1px solid var(--danger);
+  border-radius: 16px;
+  padding: 16px 20px;
+  margin-bottom: 24px;
+  font-weight: 600;
+}
+
+@media (max-width: 900px) {
+  .band {
+    padding: 16px 20px 80px;
+  }
+
+  .band-title {
+    font-size: 34px;
+  }
+
+  .band-clock {
+    font-size: 52px;
+  }
+
+  .stat-value {
+    font-size: 34px;
+    white-space: nowrap;
+  }
+
+  .board {
+    padding: 0 20px 40px;
+  }
+
+  .columns {
+    grid-template-columns: 1fr;
+  }
+
+  .ticket {
+    flex-wrap: wrap;
+  }
+
+  .ticket-time {
+    min-width: 0;
+  }
+
+  .check-in {
+    width: 100%;
+  }
+}
+
+@media (max-width: 600px) {
+  .stats {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ---------- Login ---------- */
+
+.auth {
+  --gs-brand-grace: #c9c5ef;
+  --gs-brand-soft: #f5f5f5;
+  --gs-brand-product: #c9c5ef;
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 32px 20px;
+  background: var(--band-bg);
+}
+
+.auth-card {
+  --gs-brand-grace: #372aac;
+  --gs-brand-soft: #101011;
+  --gs-brand-product: #606060;
+  width: 100%;
+  max-width: 560px;
+  background: var(--surface);
+  border-radius: 28px;
+  padding: 44px;
+  box-shadow: 0 24px 64px rgba(18, 14, 63, 0.35);
+}
+
+@media (prefers-color-scheme: dark) {
+  .auth-card {
+    --gs-brand-grace: #a79fe4;
+    --gs-brand-soft: #f5f5f5;
+    --gs-brand-product: #b3b3b3;
+  }
+}
+
+.auth-title {
+  font-size: 32px;
+  font-weight: 800;
+  margin-top: 28px;
+}
+
+.auth-subtitle {
+  color: var(--muted);
+  font-size: 18px;
+  margin-top: 8px;
+}
+
+.field {
+  display: grid;
+  gap: 8px;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.input {
+  width: 100%;
+  min-height: 64px;
+  padding: 0 20px;
+  font-size: 22px;
+  background: var(--surface);
+  border: 2px solid var(--border-strong);
+  border-radius: 14px;
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--focus);
+}
+
+.dev-note {
+  display: inline-block;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  background: var(--bg);
+  border-radius: 999px;
+  padding: 4px 12px;
 }

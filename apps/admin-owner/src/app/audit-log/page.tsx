@@ -64,75 +64,119 @@ export default function AuditLogPage() {
 
   return (
     <main>
-      <h1>Identity lookup &amp; audit log</h1>
+      <header className="page-header">
+        <div>
+          <div className="eyebrow">Restricted · Owner only</div>
+          <h1 className="page-title">Identity lookup &amp; audit log</h1>
+          <p className="page-subtitle">
+            Reveal who is behind a booking token when you have a reason to. Every lookup is recorded
+            permanently.
+          </p>
+        </div>
+      </header>
 
-      <section
-        style={{
-          background: "var(--surface)",
-          border: "1px solid var(--border)",
-          borderRadius: 12,
-          padding: 20,
-          marginBottom: 24,
-        }}
-      >
-        <h2 style={{ fontSize: 18, marginTop: 0 }}>Look up a token</h2>
-        <p style={{ color: "var(--muted)", fontSize: 14 }}>
-          Every lookup requires a reason and is recorded below before the result is shown.
-        </p>
-        <form onSubmit={handleLookup} style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-          <input
-            placeholder="Booker token"
-            value={lookupToken}
-            onChange={(e) => setLookupToken(e.target.value)}
-            style={{ flex: 1, minWidth: 200, padding: 10, border: "1px solid var(--border)", borderRadius: 8 }}
-          />
-          <input
-            placeholder="Reason (required)"
-            value={lookupReason}
-            onChange={(e) => setLookupReason(e.target.value)}
-            style={{ flex: 2, minWidth: 240, padding: 10, border: "1px solid var(--border)", borderRadius: 8 }}
-          />
-          <button
-            type="submit"
-            style={{
-              padding: "10px 18px",
-              background: "var(--accent-solid)",
-              color: "var(--accent-contrast)",
-              border: "none",
-              borderRadius: 8,
-            }}
-          >
-            Look up
-          </button>
-        </form>
-        {lookupError && <p style={{ color: "var(--danger)" }}>{lookupError}</p>}
-        {lookupResult && <p>{lookupResult}</p>}
+      <section className="card">
+        <div className="card-header">
+          <div>
+            <h2 className="card-title">Look up a token</h2>
+            <p className="card-description">
+              A reason is required and is logged before the result is shown.
+            </p>
+          </div>
+        </div>
+        <div className="card-body">
+          <form onSubmit={handleLookup} className="form-row">
+            <label className="field" style={{ flex: 1, minWidth: 200 }}>
+              <span className="label">Booker token</span>
+              <input
+                className="input mono"
+                placeholder="tok_…"
+                value={lookupToken}
+                onChange={(e) => setLookupToken(e.target.value)}
+              />
+            </label>
+            <label className="field" style={{ flex: 2, minWidth: 260 }}>
+              <span className="label">Reason</span>
+              <input
+                className="input"
+                placeholder="Why do you need this person's details?"
+                value={lookupReason}
+                onChange={(e) => setLookupReason(e.target.value)}
+              />
+            </label>
+            <button
+              type="submit"
+              className="btn btn-primary"
+              disabled={!lookupToken.trim() || !lookupReason.trim()}
+            >
+              Look up
+            </button>
+          </form>
+          {lookupError && (
+            <div role="alert" className="alert alert-danger" style={{ marginTop: 16, marginBottom: 0 }}>
+              {lookupError}
+            </div>
+          )}
+          {lookupResult && (
+            <div className="alert alert-warning" style={{ marginTop: 16, marginBottom: 0 }}>
+              <div>
+                <strong>Identity revealed:</strong> {lookupResult}
+                <div className="hint" style={{ color: "inherit", marginTop: 2 }}>
+                  This lookup has been added to the audit log below.
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
       </section>
 
-      {error && <p style={{ color: "var(--danger)" }}>{error}</p>}
-      {entries.length === 0 && !error && <p style={{ color: "var(--muted)" }}>No lookups yet.</p>}
-      {entries.length > 0 && (
-        <table>
-          <thead>
-            <tr>
-              <th>When</th>
-              <th>Staff</th>
-              <th>Token</th>
-              <th>Reason</th>
-            </tr>
-          </thead>
-          <tbody>
-            {entries.map((entry) => (
-              <tr key={entry.id}>
-                <td>{new Date(entry.lookedUpAt).toLocaleString()}</td>
-                <td>{entry.actorAuthSubject}</td>
-                <td style={{ fontFamily: "monospace" }}>{entry.token}</td>
-                <td>{entry.reason}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      {error && (
+        <div role="alert" className="alert alert-danger">
+          {error}
+        </div>
       )}
+
+      <section className="card">
+        <div className="card-header">
+          <div>
+            <h2 className="card-title">Audit trail</h2>
+            <p className="card-description">Who looked up which token, when, and why.</p>
+          </div>
+          {entries.length > 0 && <span className="badge badge-neutral">{entries.length} entries</span>}
+        </div>
+        {entries.length === 0 && !error && (
+          <div className="empty">
+            <div className="empty-title">No lookups yet</div>
+            Identity lookups will be recorded here.
+          </div>
+        )}
+        {entries.length > 0 && (
+          <div className="table-wrap">
+            <table className="table">
+              <thead>
+                <tr>
+                  <th>When</th>
+                  <th>Staff</th>
+                  <th>Token</th>
+                  <th>Reason</th>
+                </tr>
+              </thead>
+              <tbody>
+                {entries.map((entry) => (
+                  <tr key={entry.id}>
+                    <td>{new Date(entry.lookedUpAt).toLocaleString()}</td>
+                    <td>{entry.actorAuthSubject}</td>
+                    <td>
+                      <span className="token">{entry.token}</span>
+                    </td>
+                    <td className="wrap">{entry.reason}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
     </main>
   );
 }
