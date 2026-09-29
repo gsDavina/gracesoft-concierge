@@ -609,3 +609,60 @@ pricing numbers (a business decision, deliberately left as placeholders per the 
 choice), and (b) the Pilot Track's outreach/relationship items, which require the
 founder's direct action with a real clinic and cannot be performed by an engineering
 agent.
+
+## 2026-09-29 — UI polish, brand assets, and per-day opening-hours slots
+
+On branch `ui-polish-branding`.
+
+**Admin and Kiosk redesign.** The two staff apps were hard to tell apart. Admin
+(`apps/admin-owner`) is now a back-office console: a Purple 950 sidebar (`AppShell.tsx`
+replaces the old top `NavBar.tsx`), dense 14px type, cards, tables and status badges,
+with inline styles moved into shared classes in `globals.css`. Kiosk (`apps/admin-kiosk`)
+is now a touch screen: a purple header band with a live clock, large tickets and
+buttons, and a Waiting / Arrived board. Its Waiting, Arrived and Next up tiles are
+colour-coded purple, green and amber; Admin's booking tiles use thin coloured borders
+that match the status badges. The kiosk also gained a Sign out button.
+
+**Brand assets.** Header wordmarks now use the white exports (`wm-a-w.svg`,
+`wm-k-w.svg`, `wm-d-w.svg`) and favicons use the originals (`logo-a.svg`, `logo-k.svg`,
+`logo-d.svg`), copied into each app's `public/` — see [04-assets.md](./04-assets.md).
+Known issue: the demo's white wordmark sits on the page background, so it's invisible
+in light mode.
+
+**Local database setup (not a code change).** Every database-backed page returned 500.
+Cause: `apps/api/.env`'s `DATABASE_URL` had no password, and the `gracesoft_concierge`
+database had never been created. Fixed locally by adding the password, running
+`prisma migrate deploy` and `seed:dev`. The README's getting-started steps now call this
+out.
+
+**Opening hours as time slots.** `BlueprintHours` gained `slots: { opens, closes }[]`, so
+a day can have several bookable ranges (for example 09:00–12:00 and 13:00–17:00 for a
+lunch break). The old single `opens`/`closes` pair is still read as one slot, so older
+blueprints, the clinic template and LLM drafts keep working without a migration. The
+Blueprint editor adds and removes slots per day and blocks saving backwards or
+overlapping slots.
+
+**Bookings must fit inside a slot.** New `apps/api/src/lib/businessHours.ts` is shared by
+`AvailabilityService` and `BookingService`. `BookingService.create()` now rejects, for
+every channel, any booking that doesn't fit entirely inside one published slot
+(`OutsideOpeningHoursError`, HTTP 409). Before this, only the Telegram bot's slot picker
+respected hours; `POST /bookings` accepted any time. With Monday 09:00–17:00, a 1-hour
+booking can start from 09:00 to 16:00. A business with no published blueprint is not
+restricted, as before. This is business-wide; per-practitioner hours and leave remain
+M2 work in [10-product-milestones.md](./10-product-milestones.md).
+
+**Verified**: `pnpm --filter @gracesoft/api test` — 52/52 (8 new: booking-hours
+enforcement, including split days, closed days, legacy hours and end-before-start, and
+multi-range availability). Typecheck passes for api, admin-owner and admin-kiosk.
+Against the running API, with Monday 09:00–12:00 / 13:00–17:00: 1-hour bookings at
+09:00, 13:00 and 16:00 were accepted; 08:00, 11:30, 12:00, 16:30 and a Tuesday 20:00
+were rejected with 409.
+
+**Clarified, not changed**: bookings made on the demo page never reach the API, by
+design — it's a client-only simulation for sales, so they will never appear in Admin or
+Kiosk. The kiosk also only shows today's bookings.
+
+**Housekeeping**: removed `02-test-cheklist.md`, an older copy of
+[01-milestones.md](./01-milestones.md) that nothing linked to, and added an index at
+[`_internal-docs/README.md`](./README.md). `pnpm --filter @gracesoft/api lint` fails
+because `eslint` isn't installed in that package; this predates today's work.

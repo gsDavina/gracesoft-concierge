@@ -548,41 +548,98 @@ pre {
 
 /* ---------- Login ---------- */
 
+/* Full-bleed purple, like the kiosk's header band: the device itself is the brand surface. */
 .auth {
-  --gs-brand-grace: #c9c5ef;
-  --gs-brand-soft: #f5f5f5;
-  --gs-brand-product: #c9c5ef;
   min-height: 100vh;
-  display: grid;
-  place-items: center;
-  padding: 32px 20px;
+  display: flex;
+  flex-direction: column;
+  padding: 28px 40px 40px;
   background: var(--band-bg);
+  color: var(--band-text);
+}
+
+.auth-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.auth-device {
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 8px 16px;
+  border-radius: 999px;
+  border: 1px solid rgba(245, 245, 245, 0.3);
+  color: var(--band-muted);
+}
+
+.auth-stage {
+  flex: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 560px);
+  align-items: center;
+  gap: 48px;
+  width: 100%;
+  max-width: 1200px;
+  margin: 32px auto 0;
+}
+
+.auth-clock-time {
+  font-size: 120px;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.auth-clock-date {
+  font-size: 28px;
+  color: var(--band-muted);
+  margin-top: 12px;
 }
 
 .auth-card {
-  --gs-brand-grace: #372aac;
-  --gs-brand-soft: #101011;
-  --gs-brand-product: #606060;
   width: 100%;
-  max-width: 560px;
   background: var(--surface);
+  color: var(--text);
   border-radius: 28px;
   padding: 44px;
   box-shadow: 0 24px 64px rgba(18, 14, 63, 0.35);
 }
 
-@media (prefers-color-scheme: dark) {
-  .auth-card {
-    --gs-brand-grace: #a79fe4;
-    --gs-brand-soft: #f5f5f5;
-    --gs-brand-product: #b3b3b3;
-  }
-}
-
 .auth-title {
   font-size: 32px;
   font-weight: 800;
-  margin-top: 28px;
+}
+
+@media (max-width: 900px) {
+  .auth {
+    padding: 20px;
+  }
+
+  .auth-stage {
+    grid-template-columns: 1fr;
+    gap: 28px;
+  }
+
+  .auth-clock {
+    text-align: center;
+  }
+
+  .auth-clock-time {
+    font-size: 72px;
+  }
+
+  .auth-clock-date {
+    font-size: 20px;
+  }
+
+  .auth-card {
+    padding: 28px;
+  }
 }
 
 .auth-subtitle {

@@ -3,7 +3,8 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { saveDevSession } from "@/lib/session";
-import { Wordmark } from "@/brand/Wordmark";
+import Image from "next/image";
+import { BRAND } from "@/brand/config";
 
 /**
  * DEV ONLY sign-in. Stands in for a real Clerk/Auth.js login screen (03-project-structure.md)
@@ -24,12 +25,28 @@ export default function LoginPage() {
   return (
     <main className="auth">
       <section className="auth-brand">
-        <Wordmark width={240} />
+        <Image src="/brand/wm-a-w.svg" alt={BRAND.fullName} width={240} height={63} unoptimized priority />
         <div>
+          <span className="auth-restricted">
+            <LockIcon /> Owners only
+          </span>
           <h2>Run your front of house from one console.</h2>
-          <p>Bookings, your business blueprint, and the restricted identity audit log — for owners only.</p>
+          <ul className="auth-features">
+            <li>
+              <strong>Bookings</strong>
+              <span>Every appointment across channels, by token only.</span>
+            </li>
+            <li>
+              <strong>Blueprint</strong>
+              <span>Services, opening hours and FAQs your concierge answers with.</span>
+            </li>
+            <li>
+              <strong>Audit log</strong>
+              <span>Reveal who is behind a token — every lookup recorded.</span>
+            </li>
+          </ul>
         </div>
-        <p style={{ fontSize: 12, color: "#a79fe4", margin: 0 }}>Owner console</p>
+        <p className="auth-footnote">GraceSoft Concierge Admin · Owner console</p>
       </section>
       <section className="auth-form">
         <div className="auth-form-inner">
@@ -62,5 +79,24 @@ export default function LoginPage() {
         </div>
       </section>
     </main>
+  );
+}
+
+function LockIcon() {
+  return (
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <rect x="4" y="10.5" width="16" height="10.5" rx="2" />
+      <path d="M8 10.5V7a4 4 0 0 1 8 0v3.5" />
+    </svg>
   );
 }

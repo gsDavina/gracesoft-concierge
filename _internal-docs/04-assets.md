@@ -25,4 +25,14 @@ Same colourways as above (brand colours / `-b` black / `-w` white), with the app
 - `wm-k*`, `logo-k*` - Concierge Kiosk (`apps/admin-kiosk`). Logo reads CC / KO.
 - `wm-d*`, `logo-d*` - Concierge Demo (`apps/demo`). Logo reads CC / DM.
 
-The apps inline these vectors as React components (`src/brand/Wordmark.tsx` and `src/brand/Mark.tsx`). Their fills come from CSS variables, so a single component covers all three colourways and dark mode.
+## Where the apps use them
+
+Files are copied as-is into each app's `public/` folder (the apps can't import from `_internal-docs/`). If an asset here changes, copy it over again.
+
+| App | Favicon (`public/favicon.svg`) | Header wordmark (`public/brand/`) | Where the wordmark appears |
+|---|---|---|---|
+| `apps/admin-owner` | `logo-a.svg` | `wm-a-w.svg` | Dark sidebar, and the dark brand panel on the login screen |
+| `apps/admin-kiosk` | `logo-k.svg` | `wm-k-w.svg` | Purple header band, and the purple login screen |
+| `apps/demo` | `logo-d.svg` | `wm-d-w.svg` | Top of the home and pricing pages — white, so it only shows on a dark background |
+
+Each app also has older inlined `src/brand/Wordmark.tsx` / `Mark.tsx` components (fills from CSS variables). They're no longer rendered anywhere and can be deleted when the assets are next tidied.

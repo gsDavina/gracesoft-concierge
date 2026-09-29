@@ -943,6 +943,60 @@ pre,
   max-width: 420px;
 }
 
+.auth-brand {
+  /* Faint dot grid: reads as a back-office "console", unlike the Kiosk's flat purple. */
+  background-image: radial-gradient(rgba(167, 159, 228, 0.16) 1px, transparent 1px);
+  background-size: 22px 22px;
+}
+
+.auth-restricted {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 16px;
+  padding: 4px 10px;
+  border: 1px solid #372aac;
+  border-radius: 999px;
+  background: #1c155e;
+  color: #c9c5ef;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.auth-features {
+  list-style: none;
+  margin: 28px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 18px;
+  max-width: 420px;
+}
+
+.auth-features li {
+  display: grid;
+  gap: 2px;
+  padding-left: 16px;
+  border-left: 2px solid #a79fe4;
+}
+
+.auth-features strong {
+  color: #f5f5f5;
+  font-weight: 600;
+}
+
+.auth-features span {
+  color: #c9c5ef;
+  font-size: 13px;
+}
+
+.auth-brand .auth-footnote {
+  margin: 0;
+  font-size: 12px;
+  color: #a79fe4;
+}
+
 .auth-form {
   display: grid;
   place-items: center;
