@@ -23,6 +23,7 @@ import holidayRoutes from "./routes/holidays.js";
 import onboardingRoutes from "./routes/onboarding.js";
 import telegramWebhookRoutes from "./routes/telegramWebhook.js";
 import healthRoutes from "./routes/health.js";
+import publicAvailabilityRoutes from "./routes/publicAvailability.js";
 
 export interface BuildAppOptions {
   db?: PrismaClient;
@@ -92,6 +93,7 @@ export async function buildApp(opts: BuildAppOptions = {}): Promise<FastifyInsta
   await app.register(bookingRoutes, { bookingService });
   await app.register(holidayRoutes, { db, holidayProvider });
   await app.register(onboardingRoutes, { db, onboardingService });
+  await app.register(publicAvailabilityRoutes, { db, availabilityService });
   await app.register(telegramWebhookRoutes, { telegramBotService, webhookSecret: env.TELEGRAM_WEBHOOK_SECRET });
 
   return app;

@@ -129,6 +129,20 @@ describe("AvailabilityService.listSlots", () => {
     expect(slots.map((s) => s.time)).toEqual(["09:00", "10:00", "14:00", "15:00"]);
   });
 
+  it("drops slots that start at or before `notBefore`, e.g. times earlier today", async () => {
+    const db = makeFakeDb({
+      businesses: [{ id: "biz-1", region: "SG", timezone: "Asia/Singapore" }],
+      blueprints: [PUBLISHED_BLUEPRINT],
+      bookings: [],
+    });
+    const service = new AvailabilityService(db, new StaticHolidayProvider());
+
+    // 10:00 SGT on Monday 2026-01-05 = 02:00Z.
+    const slots = await service.listSlots("biz-1", "Consultation", "2026-01-05", new Date("2026-01-05T02:00:00.000Z"));
+
+    expect(slots.map((s) => s.time)).toEqual(["10:30"]);
+  });
+
   it("excludes a slot that overlaps an existing booking", async () => {
     const db = makeFakeDb({
       businesses: [{ id: "biz-1", region: "SG", timezone: "Asia/Singapore" }],

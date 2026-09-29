@@ -9,10 +9,11 @@ const envSchema = z.object({
   PORT: z.coerce.number().int().positive().default(3000),
   DATABASE_URL: z.string().min(1, "DATABASE_URL is required"),
 
-  // Comma-separated origins allowed to call the API (the two admin frontends in dev/prod).
+  // Comma-separated origins allowed to call the API: the two admin frontends, plus apps/demo
+  // (read-only /public availability only). Deployments must list their real origins here.
   CORS_ORIGINS: z
     .string()
-    .default("http://localhost:3001,http://localhost:3002")
+    .default("http://localhost:3001,http://localhost:3002,http://localhost:3003")
     .transform((value) => value.split(",").map((origin) => origin.trim())),
 
   // Per-business encryption keys (Phase 0). In production these are resolved from the

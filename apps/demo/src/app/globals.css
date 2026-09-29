@@ -73,8 +73,15 @@ pre {
   gap: 24px;
 }
 
+.demo-date-time {
+  display: grid;
+  grid-template-columns: 3fr 2fr;
+  gap: 12px;
+}
+
 @media (max-width: 640px) {
-  .comparison-grid {
+  .comparison-grid,
+  .demo-date-time {
     grid-template-columns: 1fr;
   }
 }

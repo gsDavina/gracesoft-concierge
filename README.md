@@ -15,7 +15,7 @@ architecture.
 | `apps/api` | 3000 | — | Fastify backend: bookings, opening hours, identity lookups, onboarding wizard, Telegram bot webhook |
 | `apps/admin-owner` | 3001 | Business owner | **Admin console** (dark sidebar): bookings overview, Blueprint editor (services, opening hours, FAQs), restricted identity lookup and audit log |
 | `apps/admin-kiosk` | 3002 | Front desk | **Kiosk** (purple header, touch-sized): today's check-in queue with Waiting / Arrived / Next up |
-| `apps/demo` | 3003 | Prospects | Public trust-surface demo and pricing page. Fully client-side — it never calls the API |
+| `apps/demo` | 3003 | Prospects | Public trust-surface demo and pricing page. Bookings stay in the browser; it only reads the demo business's published open times from the API |
 
 ## Monorepo layout
 
@@ -87,7 +87,7 @@ pnpm --filter @gracesoft/api seed:dev
 pnpm dev
 ```
 
-`apps/demo` needs no `.env`.
+`apps/demo` works without a `.env` in local dev (it defaults to the API on `:3000` and business `dev-business-1`). For a deployment, copy `apps/demo/.env.example` and set `NEXT_PUBLIC_API_URL`, and add the demo's URL to the API's `CORS_ORIGINS`. The demo business needs a **published** blueprint, or the form has no times to offer.
 
 ### Dev-only sign-in
 
@@ -120,7 +120,8 @@ the bot books for (e.g. `dev-business-1`).
 | Symptom | Cause |
 |---|---|
 | Admin/Kiosk show "Internal Server Error", but `GET :3000/health` is fine | The API can't reach Postgres. Check `DATABASE_URL` in `apps/api/.env` includes the password, and that `pnpm db:migrate` has been run. The API reads `.env` only when it starts, so restart it after editing |
-| A booking made on the demo page doesn't show up in Admin or Kiosk | Expected: the demo is a client-only simulation and never sends anything to the API |
+| A booking made on the demo page doesn't show up in Admin or Kiosk | Expected: demo bookings are a simulation and never leave the browser. The demo only reads open times |
+| The demo says it couldn't load opening hours, or offers no dates | The API isn't reachable at `NEXT_PUBLIC_API_URL`, the demo's origin is missing from `CORS_ORIGINS`, or the demo business has no published blueprint |
 | A booking shows in Admin but not on the Kiosk | The kiosk only lists **today's** bookings |
 | A booking is rejected with `OutsideOpeningHours` | It doesn't fit inside a published time slot — see [Setting up opening hours](#setting-up-opening-hours) |
 

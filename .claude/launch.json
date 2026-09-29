@@ -2,6 +2,12 @@
   "version": "0.0.1",
   "configurations": [
     {
+      "name": "api",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--filter", "@gracesoft/api", "dev"],
+      "port": 3000
+    },
+    {
       "name": "admin-kiosk",
       "runtimeExecutable": "pnpm",
       "runtimeArgs": ["--filter", "@gracesoft/admin-kiosk", "dev"],

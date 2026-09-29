@@ -63,11 +63,11 @@ export class AvailabilityService {
   }
 
   /** Services from the business's published blueprint, for offering a booker a choice. */
-  async listPublishedServices(businessId: string): Promise<{ name: string }[]> {
+  async listPublishedServices(businessId: string): Promise<{ name: string; durationMinutes: number }[]> {
     const blueprint = await this.db.blueprint.findFirst({ where: { businessId, status: "published" } });
     if (!blueprint) return [];
-    const services = blueprint.services as unknown as { name: string }[];
-    return services.map((s) => ({ name: s.name }));
+    const services = blueprint.services as unknown as { name: string; durationMinutes?: number }[];
+    return services.map((s) => ({ name: s.name, durationMinutes: s.durationMinutes ?? DEFAULT_SLOT_MINUTES }));
   }
 
   /** FAQs from the business's published blueprint — the vertical-specific context (e.g.
@@ -79,7 +79,11 @@ export class AvailabilityService {
   }
 
   /** Open time slots for a specific service on a specific date, excluding already-booked times. */
-  async listSlots(businessId: string, serviceType: string, date: string): Promise<Slot[]> {
+  /**
+   * `notBefore`, when given, also drops slots starting at or before that instant — e.g.
+   * pass `new Date()` so times earlier today that have already passed aren't offered.
+   */
+  async listSlots(businessId: string, serviceType: string, date: string, notBefore?: Date): Promise<Slot[]> {
     const business = await this.db.business.findUniqueOrThrow({
       where: { id: businessId },
       select: { timezone: true },
@@ -116,7 +120,8 @@ export class AvailabilityService {
       const startsAt = zonedTimeToUtc(date, time, business.timezone);
       const endsAt = new Date(startsAt.getTime() + durationMinutes * 60 * 1000);
       const overlaps = existing.some((b) => startsAt < b.endsAt && endsAt > b.startsAt);
-      if (!overlaps) {
+      const alreadyPassed = notBefore !== undefined && startsAt <= notBefore;
+      if (!overlaps && !alreadyPassed) {
         slots.push({ time, startsAt: startsAt.toISOString(), endsAt: endsAt.toISOString() });
       }
     }
