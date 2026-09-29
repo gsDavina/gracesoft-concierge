@@ -1,7 +1,8 @@
 import type { PrismaClient } from "@gracesoft/db";
-import type { BlueprintHours, Weekday } from "@gracesoft/shared-types";
+import type { BlueprintHours } from "@gracesoft/shared-types";
 import { toLocalDateString, type HolidayProvider } from "../holiday/holidayProvider.js";
 import { zonedTimeToUtc } from "../../lib/timezone.js";
+import { fromMinutes, getDaySlots, toMinutes, weekdayOf } from "../../lib/businessHours.js";
 
 const DEFAULT_SLOT_MINUTES = 30;
 const ACTIVE_STATUSES = ["pending", "confirmed", "checked_in", "completed"] as const;
@@ -50,8 +51,7 @@ export class AvailabilityService {
       d.setUTCDate(d.getUTCDate() + i);
       const dateStr = toLocalDateString(d, business.timezone);
       const weekday = weekdayOf(dateStr, business.timezone);
-      const dayHours = hours.find((h) => h.day === weekday);
-      if (!dayHours || dayHours.closed || !dayHours.opens || !dayHours.closes) continue;
+      if (getDaySlots(hours.find((h) => h.day === weekday)).length === 0) continue;
 
       const year = Number(dateStr.slice(0, 4));
       const holidaysThisYear = await this.holidays.getHolidays(business.region, year);
@@ -92,13 +92,13 @@ export class AvailabilityService {
     const services = blueprint.services as unknown as { name: string; durationMinutes?: number }[];
 
     const weekday = weekdayOf(date, business.timezone);
-    const dayHours = hours.find((h) => h.day === weekday);
-    if (!dayHours || dayHours.closed || !dayHours.opens || !dayHours.closes) return [];
+    const daySlots = getDaySlots(hours.find((h) => h.day === weekday));
+    if (daySlots.length === 0) return [];
 
     const service = services.find((s) => s.name === serviceType);
     const durationMinutes = service?.durationMinutes ?? DEFAULT_SLOT_MINUTES;
 
-    const candidates = generateCandidateTimes(dayHours.opens, dayHours.closes, durationMinutes);
+    const candidates = daySlots.flatMap((s) => generateCandidateTimes(s.opens, s.closes, durationMinutes));
 
     const dayStart = zonedTimeToUtc(date, "00:00", business.timezone);
     const dayEnd = zonedTimeToUtc(date, "23:59", business.timezone);
@@ -124,23 +124,12 @@ export class AvailabilityService {
   }
 }
 
-function weekdayOf(dateStr: string, timeZone: string): Weekday {
-  const d = new Date(`${dateStr}T12:00:00Z`); // noon UTC keeps this clear of any zone's day boundary
-  const name = new Intl.DateTimeFormat("en-US", { timeZone, weekday: "long" }).format(d).toLowerCase();
-  return name as Weekday;
-}
-
+/** Start times every `stepMinutes` from `opens` such that the whole appointment ends by `closes`. */
 function generateCandidateTimes(opens: string, closes: string, stepMinutes: number): string[] {
-  const [openH, openM] = opens.split(":").map(Number);
-  const [closeH, closeM] = closes.split(":").map(Number);
-  const openMinutes = openH! * 60 + openM!;
-  const closeMinutes = closeH! * 60 + closeM!;
-
+  const closeMinutes = toMinutes(closes);
   const times: string[] = [];
-  for (let m = openMinutes; m + stepMinutes <= closeMinutes; m += stepMinutes) {
-    const h = Math.floor(m / 60);
-    const min = m % 60;
-    times.push(`${String(h).padStart(2, "0")}:${String(min).padStart(2, "0")}`);
+  for (let m = toMinutes(opens); m + stepMinutes <= closeMinutes; m += stepMinutes) {
+    times.push(fromMinutes(m));
   }
   return times;
 }

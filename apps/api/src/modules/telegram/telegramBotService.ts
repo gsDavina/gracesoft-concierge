@@ -1,7 +1,7 @@
 import { randomBytes } from "node:crypto";
 import type { PrismaClient } from "@gracesoft/db";
 import type { AvailabilityService } from "../booking/availabilityService.js";
-import { HolidayBlockedError, type BookingService } from "../booking/bookingService.js";
+import { HolidayBlockedError, OutsideOpeningHoursError, type BookingService } from "../booking/bookingService.js";
 import type { IdentityService } from "../identity/identityService.js";
 import type { InlineKeyboardButton, TelegramClient } from "./telegramClient.js";
 import type { TelegramUpdate } from "./telegramUpdate.js";
@@ -245,13 +245,15 @@ export class TelegramBotService {
       );
     } catch (err) {
       await this.setState(chatId, IDLE_STATE);
-      if (!(err instanceof HolidayBlockedError)) {
+      if (!(err instanceof HolidayBlockedError) && !(err instanceof OutsideOpeningHoursError)) {
         this.onError(err);
       }
       const message =
         err instanceof HolidayBlockedError
           ? "Sorry, that date turned out to be a public holiday. Type /book to try another date."
-          : "Sorry, something went wrong booking that slot. Type /book to try again.";
+          : err instanceof OutsideOpeningHoursError
+            ? "Sorry, that time is no longer within opening hours. Type /book to pick another time."
+            : "Sorry, something went wrong booking that slot. Type /book to try again.";
       await this.telegram.sendMessage(chatId, message);
     }
   }

@@ -30,8 +30,13 @@ const blueprintServiceSchema = z.object({
   description: z.string().optional(),
   durationMinutes: z.number().int().positive().optional(),
 });
+const timeSchema = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "times must be HH:mm (24-hour)");
+const blueprintTimeSlotSchema = z
+  .object({ opens: timeSchema, closes: timeSchema })
+  .refine((s) => s.closes > s.opens, { message: "each time slot must close after it opens" });
 const blueprintHoursSchema = z.object({
   day: z.enum(["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]),
+  slots: z.array(blueprintTimeSlotSchema).optional(),
   opens: z.string().optional(),
   closes: z.string().optional(),
   closed: z.boolean().optional(),

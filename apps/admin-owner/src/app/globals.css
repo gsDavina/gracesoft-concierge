@@ -802,16 +802,39 @@ pre,
 .hours-row {
   display: grid;
   grid-template-columns: 120px 90px 1fr;
-  align-items: center;
+  align-items: start;
   gap: 12px;
-  padding: 6px 0;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.hours-row:last-child {
+  border-bottom: none;
+}
+
+/* Day name + Open switch line up with the first slot's inputs. */
+.hours-row > span,
+.hours-row > .switch {
+  min-height: 38px;
+  display: flex;
+  align-items: center;
+}
+
+.hours-slots {
+  display: grid;
+  gap: 8px;
 }
 
 .hours-times {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 8px;
   color: var(--muted);
+}
+
+.input[aria-invalid="true"] {
+  border-color: var(--danger);
 }
 
 .hours-times .input {

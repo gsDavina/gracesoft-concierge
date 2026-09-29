@@ -4,6 +4,7 @@ import type {
   Blueprint,
   BlueprintFaq,
   BlueprintHours,
+  BlueprintTimeSlot,
   BlueprintService,
   OnboardingSource,
   Weekday,
@@ -34,7 +35,51 @@ const WEEKDAYS: Weekday[] = [
   "sunday",
 ];
 
-const emptyHours = (): BlueprintHours[] => WEEKDAYS.map((day) => ({ day, closed: true }));
+const emptyHours = (): BlueprintHours[] => WEEKDAYS.map((day) => ({ day, closed: true, slots: [] }));
+
+const DEFAULT_SLOT: BlueprintTimeSlot = { opens: "09:00", closes: "17:00" };
+
+/**
+ * Always edit seven days in Monday-first order, each as `slots`. Accepts the legacy single
+ * `opens`/`closes` form (older blueprints, LLM drafts, templates) and merges duplicate
+ * entries for the same day, which the heuristic extractor can produce.
+ */
+function normalizeHours(list: BlueprintHours[]): BlueprintHours[] {
+  return WEEKDAYS.map((day) => {
+    const entries = list.filter((h) => h.day === day);
+    const slots = entries
+      .flatMap((h) => h.slots ?? (h.opens && h.closes ? [{ opens: h.opens, closes: h.closes }] : []))
+      .sort((a, b) => a.opens.localeCompare(b.opens));
+    const closed = slots.length === 0 || entries.every((h) => h.closed);
+    return { day, closed, slots: closed ? [] : slots };
+  });
+}
+
+/** First human-readable problem with the hours (empty, backwards, or overlapping slots), if any. */
+function findHoursProblem(hours: BlueprintHours[]): string | null {
+  for (const h of hours) {
+    if (h.closed) continue;
+    const slots = h.slots ?? [];
+    const label = h.day.charAt(0).toUpperCase() + h.day.slice(1);
+    if (slots.some((s) => !s.opens || !s.closes)) return `${label}: every time slot needs a start and end time.`;
+    if (slots.some((s) => s.closes <= s.opens)) return `${label}: each time slot must close after it opens.`;
+    const sorted = [...slots].sort((a, b) => a.opens.localeCompare(b.opens));
+    if (sorted.some((s, k) => k > 0 && s.opens < sorted[k - 1]!.closes)) {
+      return `${label}: time slots can't overlap.`;
+    }
+  }
+  return null;
+}
+
+/** A sensible next slot: starts an hour after the last one ends, e.g. a post-lunch session. */
+function nextSlotAfter(slots: BlueprintTimeSlot[]): BlueprintTimeSlot {
+  const last = slots[slots.length - 1];
+  if (!last) return { ...DEFAULT_SLOT };
+  const [h, m] = last.closes.split(":").map(Number);
+  const start = Math.min((h ?? 0) + 1, 22);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return { opens: `${pad(start)}:${pad(m ?? 0)}`, closes: `${pad(Math.min(start + 3, 23))}:${pad(m ?? 0)}` };
+}
 
 /**
  * Phase 1 onboarding wizard (01-milestones.md): input step (submit a URL or upload a
@@ -87,7 +132,7 @@ export default function BlueprintPage() {
       setBlueprint(fetched);
       if (fetched) {
         setServices(fetched.services);
-        setHours(fetched.hours.length > 0 ? fetched.hours : emptyHours());
+        setHours(normalizeHours(fetched.hours));
         setFaqs(fetched.faqs);
       }
     } catch (err) {
@@ -141,7 +186,7 @@ export default function BlueprintPage() {
       const { blueprint: generated } = await generateBlueprintDraft(actor);
       setBlueprint(generated);
       setServices(generated.services);
-      setHours(generated.hours.length > 0 ? generated.hours : emptyHours());
+      setHours(normalizeHours(generated.hours));
       setFaqs(generated.faqs);
       setNotice("Draft generated — review and edit below before publishing.");
     } catch (err) {
@@ -159,7 +204,7 @@ export default function BlueprintPage() {
     try {
       const { template } = await fetchVerticalTemplate(actor, "clinic");
       setServices(template.services);
-      setHours(template.hours.length > 0 ? template.hours : emptyHours());
+      setHours(normalizeHours(template.hours));
       setFaqs(template.faqs);
       setNotice(
         "Clinic template loaded — this is generic placeholder content. Edit the fees, hours, and policies below before saving.",
@@ -173,6 +218,12 @@ export default function BlueprintPage() {
 
   async function handleSaveDraft() {
     if (!actor) return;
+    const problem = findHoursProblem(hours);
+    if (problem) {
+      setNotice(null);
+      setError(problem);
+      return;
+    }
     setBusy("saving");
     setError(null);
     setNotice(null);
@@ -426,41 +477,97 @@ export default function BlueprintPage() {
 
           <div className="editor-section">
             <div className="editor-section-header">
-              <h3 className="editor-section-title">Opening hours</h3>
+              <div>
+                <h3 className="editor-section-title">Opening hours</h3>
+                <p className="hint">
+                  Add one or more bookable time slots per day. Appointments must fit entirely inside a
+                  slot — with 09:00–17:00, a 1-hour appointment can start no later than 16:00.
+                </p>
+              </div>
             </div>
             <div className="hours-grid">
-              {hours.map((h, i) => (
-                <div key={h.day} className="hours-row">
-                  <span style={{ textTransform: "capitalize", fontWeight: 500 }}>{h.day}</span>
-                  <label className="switch">
-                    <input
-                      type="checkbox"
-                      checked={!h.closed}
-                      onChange={(e) => updateAt(setHours, i, { ...h, closed: !e.target.checked })}
-                    />
-                    {h.closed ? "Closed" : "Open"}
-                  </label>
-                  {!h.closed && (
-                    <div className="hours-times">
+              {hours.map((h, i) => {
+                const slots = h.slots ?? [];
+                const setSlots = (next: BlueprintTimeSlot[]) => updateAt(setHours, i, { ...h, slots: next });
+                return (
+                  <div key={h.day} className="hours-row">
+                    <span style={{ textTransform: "capitalize", fontWeight: 500 }}>{h.day}</span>
+                    <label className="switch">
                       <input
-                        className="input"
-                        type="time"
-                        aria-label={`${h.day} opens`}
-                        value={h.opens ?? ""}
-                        onChange={(e) => updateAt(setHours, i, { ...h, opens: e.target.value })}
+                        type="checkbox"
+                        checked={!h.closed}
+                        onChange={(e) =>
+                          updateAt(setHours, i, {
+                            ...h,
+                            closed: !e.target.checked,
+                            slots: e.target.checked && slots.length === 0 ? [{ ...DEFAULT_SLOT }] : slots,
+                          })
+                        }
                       />
-                      <span>to</span>
-                      <input
-                        className="input"
-                        type="time"
-                        aria-label={`${h.day} closes`}
-                        value={h.closes ?? ""}
-                        onChange={(e) => updateAt(setHours, i, { ...h, closes: e.target.value })}
-                      />
-                    </div>
-                  )}
-                </div>
-              ))}
+                      {h.closed ? "Closed" : "Open"}
+                    </label>
+                    {!h.closed && (
+                      <div className="hours-slots">
+                        {slots.map((slot, j) => {
+                          const invalid = !!slot.opens && !!slot.closes && slot.closes <= slot.opens;
+                          const overlaps = slots.some(
+                            (other, k) => k !== j && slot.opens < other.closes && other.opens < slot.closes,
+                          );
+                          return (
+                            <div key={j} className="hours-times">
+                              <input
+                                className="input"
+                                type="time"
+                                aria-label={`${h.day} slot ${j + 1} opens`}
+                                aria-invalid={invalid || overlaps}
+                                value={slot.opens}
+                                onChange={(e) =>
+                                  setSlots(slots.map((s, k) => (k === j ? { ...s, opens: e.target.value } : s)))
+                                }
+                              />
+                              <span>to</span>
+                              <input
+                                className="input"
+                                type="time"
+                                aria-label={`${h.day} slot ${j + 1} closes`}
+                                aria-invalid={invalid || overlaps}
+                                value={slot.closes}
+                                onChange={(e) =>
+                                  setSlots(slots.map((s, k) => (k === j ? { ...s, closes: e.target.value } : s)))
+                                }
+                              />
+                              <button
+                                type="button"
+                                className="btn btn-sm btn-danger-ghost"
+                                aria-label={`Remove ${h.day} slot ${j + 1}`}
+                                onClick={() => {
+                                  const next = slots.filter((_, k) => k !== j);
+                                  updateAt(setHours, i, { ...h, slots: next, closed: next.length === 0 });
+                                }}
+                              >
+                                Remove
+                              </button>
+                              {(invalid || overlaps) && (
+                                <span className="hint" style={{ color: "var(--danger)" }}>
+                                  {invalid ? "Must close after it opens" : "Overlaps another slot"}
+                                </span>
+                              )}
+                            </div>
+                          );
+                        })}
+                        <button
+                          type="button"
+                          className="btn btn-sm"
+                          style={{ justifySelf: "start" }}
+                          onClick={() => setSlots([...slots, nextSlotAfter(slots)])}
+                        >
+                          + Add time slot
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </div>
 

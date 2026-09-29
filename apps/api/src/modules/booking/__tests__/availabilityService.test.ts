@@ -101,6 +101,34 @@ describe("AvailabilityService.listSlots", () => {
     expect(slots.map((s) => s.time)).toEqual(["09:00", "09:30", "10:00", "10:30"]);
   });
 
+  it("offers slots from every configured range in a day, skipping the gap between them", async () => {
+    const db = makeFakeDb({
+      businesses: [{ id: "biz-1", region: "SG", timezone: "Asia/Singapore" }],
+      blueprints: [
+        {
+          ...PUBLISHED_BLUEPRINT,
+          services: [{ name: "Consultation", durationMinutes: 60 }],
+          hours: [
+            {
+              day: "monday",
+              slots: [
+                { opens: "14:00", closes: "16:00" },
+                { opens: "09:00", closes: "11:00" },
+              ],
+            },
+          ],
+        },
+      ],
+      bookings: [],
+    });
+    const service = new AvailabilityService(db, new StaticHolidayProvider());
+
+    const slots = await service.listSlots("biz-1", "Consultation", "2026-01-05");
+
+    // 60-minute appointments: the last start in each range is one hour before it closes.
+    expect(slots.map((s) => s.time)).toEqual(["09:00", "10:00", "14:00", "15:00"]);
+  });
+
   it("excludes a slot that overlaps an existing booking", async () => {
     const db = makeFakeDb({
       businesses: [{ id: "biz-1", region: "SG", timezone: "Asia/Singapore" }],

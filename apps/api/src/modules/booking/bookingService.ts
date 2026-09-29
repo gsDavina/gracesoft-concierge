@@ -1,13 +1,26 @@
 import type { Booking as DbBooking, PrismaClient } from "@gracesoft/db";
-import type { Booking, CreateBookingInput } from "@gracesoft/shared-types";
+import type { BlueprintHours, Booking, CreateBookingInput } from "@gracesoft/shared-types";
 import type { CalendarAdapter } from "./calendarAdapter.js";
 import { toLocalDateString, type HolidayProvider } from "../holiday/holidayProvider.js";
+import { fitsWithinSlots, getDaySlots, toLocalDateAndMinutes, weekdayOf } from "../../lib/businessHours.js";
 
 /** Thrown when a booking's date falls on a public holiday blocked for the business's region. */
 export class HolidayBlockedError extends Error {
   constructor(public readonly holidayName: string) {
     super(`This date is a public holiday (${holidayName}) and is not bookable.`);
     this.name = "HolidayBlockedError";
+  }
+}
+
+/**
+ * Thrown when a booking doesn't fit entirely inside one of the business's published
+ * opening-hours ranges for that day (e.g. with Monday 09:00–17:00, a 1-hour booking can
+ * start no earlier than 09:00 and no later than 16:00).
+ */
+export class OutsideOpeningHoursError extends Error {
+  constructor(message = "This time is outside the business's opening hours.") {
+    super(message);
+    this.name = "OutsideOpeningHoursError";
   }
 }
 
@@ -20,6 +33,7 @@ export class BookingService {
 
   async create(input: CreateBookingInput): Promise<Booking> {
     await this.assertNotOnHoliday(input.businessId, new Date(input.startsAt));
+    await this.assertWithinOpeningHours(input.businessId, new Date(input.startsAt), new Date(input.endsAt));
 
     const booking = await this.db.booking.create({
       data: {
@@ -104,6 +118,48 @@ export class BookingService {
       data: { status: "checked_in" },
     });
     return toBookingDto(checkedIn);
+  }
+
+  /**
+   * Every booking — whatever the channel — must fit inside one published opening-hours
+   * range. Enforced here rather than only in AvailabilityService, because /bookings also
+   * accepts an arbitrary startsAt/endsAt directly. A business with no published blueprint
+   * has no hours to enforce yet, so it's allowed through (matches pre-onboarding behaviour).
+   */
+  private async assertWithinOpeningHours(businessId: string, startsAt: Date, endsAt: Date): Promise<void> {
+    if (!(endsAt > startsAt)) {
+      throw new OutsideOpeningHoursError("A booking must end after it starts.");
+    }
+    const business = await this.db.business.findUnique({
+      where: { id: businessId },
+      select: { timezone: true },
+    });
+    if (!business) return; // let the FK constraint on booking.create surface the real error
+
+    const blueprint = await this.db.blueprint.findFirst({
+      where: { businessId, status: "published" },
+      select: { hours: true },
+    });
+    if (!blueprint) return;
+
+    const start = toLocalDateAndMinutes(startsAt, business.timezone);
+    const end = toLocalDateAndMinutes(endsAt, business.timezone);
+    // A booking ending exactly at local midnight reads as minute 0 of the next day.
+    const endMinutes = end.date === start.date ? end.minutes : end.minutes === 0 ? 24 * 60 : -1;
+    if (endMinutes < 0) {
+      throw new OutsideOpeningHoursError("A booking can't span more than one day.");
+    }
+
+    const hours = blueprint.hours as unknown as BlueprintHours[];
+    const slots = getDaySlots(hours.find((h) => h.day === weekdayOf(start.date, business.timezone)));
+    if (!fitsWithinSlots(slots, start.minutes, endMinutes)) {
+      const open = slots.map((s) => `${s.opens}–${s.closes}`).join(", ");
+      throw new OutsideOpeningHoursError(
+        open
+          ? `That time is outside opening hours. On that day, bookings must fall within: ${open}.`
+          : "The business is closed on that day.",
+      );
+    }
   }
 
   /** Public-holiday auto-blocking (01-milestones.md Phase 1) — keyed by Business.region. */

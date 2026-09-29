@@ -37,9 +37,23 @@ export type Weekday =
   | "saturday"
   | "sunday";
 
+/** One bookable time range within a day, e.g. 09:00–12:00. "HH:mm", 24-hour, business-local. */
+export interface BlueprintTimeSlot {
+  opens: string;
+  closes: string;
+}
+
 export interface BlueprintHours {
   day: Weekday;
-  /** "HH:mm", 24-hour, business-local time. Omitted (with closed: true) if not open that day. */
+  /**
+   * Bookable ranges for this day, e.g. a clinic closed for lunch has two: 09:00–12:00 and
+   * 14:00–17:00. A booking must fit entirely inside one range (start >= opens, end <= closes).
+   */
+  slots?: BlueprintTimeSlot[];
+  /**
+   * Legacy single-range form — still accepted (LLM drafts, templates, blueprints saved
+   * before `slots` existed) and read as one slot when `slots` is absent.
+   */
   opens?: string;
   closes?: string;
   closed?: boolean;
