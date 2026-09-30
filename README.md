@@ -83,6 +83,11 @@ pnpm db:generate
 # Seeds business dev-business-1 with users dev-owner-1 (owner) and dev-frontdesk-1 (front desk):
 pnpm --filter @gracesoft/api seed:dev
 
+# Optional: realistic demo content — "GraceSoft Beauty" (gracesoft-beauty), a Singapore salon with
+# published hours, 18 services and FAQs; users beauty-owner-1 / beauty-frontdesk-1.
+# Needs a "gracesoft-beauty-key-1" entry in GRACESOFT_DEV_ENCRYPTION_KEYS (the script warns if missing).
+pnpm --filter @gracesoft/api seed:beauty
+
 # api :3000, admin-owner :3001, admin-kiosk :3002, demo :3003
 pnpm dev
 ```
